@@ -10,10 +10,15 @@ module Byox
 
   AGENT_JOBS = {
     # The coach runs in a throwaway dir holding only the lesson, the failure, the
-    # learner's diff and concept pages. The solution is not in its tree, and it has no Bash.
+    # learner's diff and concept pages. Headless Read still accepts absolute paths,
+    # so Read deny rules (which also cover Grep and Glob) wall off the solution and the mentor's source.
     explain: AgentJob.new(
       kind: :explain, system_file: "agents/coach.md", allowed: "Read,Glob,Grep",
-      disallowed: "Bash,Edit,Write,WebFetch,WebSearch", workdir: :context,
+      disallowed: lambda { |j|
+        walls = %w[solution source].map { "Read(/#{File.join(j.course.course_dir, _1)}/**)" }
+        ["Bash,Edit,Write,WebFetch,WebSearch", *walls].join(",")
+      },
+      workdir: :context,
       prompt: lambda { |j|
         "Step #{j.step.id} (#{j.step.title}) failed its verify. In this directory: lesson.md, " \
           "failure.txt, learner.diff and concepts/. Explain the failure as the coach."
@@ -59,9 +64,10 @@ module Byox
     module_function
 
     def command(job, input)
+      denied = job.disallowed.respond_to?(:call) ? job.disallowed.call(input) : job.disallowed
       [*Shellwords.split(input.config.agent_cmd), job.prompt.call(input),
        "--append-system-prompt", File.read(File.join(PLUGIN_DIR, job.system_file)),
-       "--allowedTools", job.allowed, *(job.disallowed.empty? ? [] : ["--disallowedTools", job.disallowed])]
+       "--allowedTools", job.allowed, *(denied.empty? ? [] : ["--disallowedTools", denied])]
     end
 
     # emit.(event, data) streams to the page. Returns the final result hash.
@@ -81,7 +87,7 @@ module Byox
     def build_context(input, dir)
       ctx = File.join(dir, "context")
       FileUtils.mkdir_p(File.join(ctx, "concepts"))
-      FileUtils.cp(input.lesson.path, File.join(ctx, "lesson.md"))
+      File.write(File.join(ctx, "lesson.md"), revealed_only(input))
       File.write(File.join(ctx, "failure.txt"), input.failure_path && File.exist?(input.failure_path) ? File.read(input.failure_path) : "")
       File.write(File.join(ctx, "learner.diff"), learner_diff(input.course.dir))
       input.lesson.concepts.each do |slug|
@@ -89,6 +95,14 @@ module Byox
         FileUtils.cp(src, File.join(ctx, "concepts", "#{slug}.md")) if File.exist?(src)
       end
       ctx
+    end
+
+    # The coach must not see a hint the learner has not revealed.
+    def revealed_only(input)
+      meta, body = Format.split_front_matter(input.lesson.path)
+      state = State.load(input.course.state_path)
+      meta["steps"].each { |s| s["hints"] = Array(s["hints"]).first(Status.hints_revealed(state, s["id"].to_s)) }
+      "#{YAML.dump(meta)}---\n#{body}"
     end
 
     def learner_diff(dir)

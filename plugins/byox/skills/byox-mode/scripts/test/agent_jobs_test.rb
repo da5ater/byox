@@ -39,7 +39,13 @@ class AgentJobsTest < Minitest::Test
     assert_match(/\AStep 01\.1 \(Reply to PING\) failed/, argv[0])
     assert_equal File.read(File.join(Byox::PLUGIN_DIR, "agents/coach.md")), argv[argv.index("--append-system-prompt") + 1]
     assert_equal "Read,Glob,Grep", argv[argv.index("--allowedTools") + 1]
-    assert_includes argv[argv.index("--disallowedTools") + 1].split(","), "Bash"
+    denied = argv[argv.index("--disallowedTools") + 1].split(",")
+    assert_includes denied, "Bash"
+    %w[solution source].each do |dir|
+      assert_includes denied, "Read(/#{File.join(@app_dir, 'course', dir)}/**)", "an absolute path must not reach course/#{dir}"
+    end
+    hint = Fixture.course(@root).lesson("01-ping").steps.first.hints.first
+    refute_includes f["lesson"], hint, "unrevealed hints must not reach the coach"
 
     ctx = Dir.mktmpdir
     input = Byox::JobInput.new(course: Fixture.course(@root), config: Fixture.config(@root), lesson: Fixture.course(@root).lesson("01-ping"),

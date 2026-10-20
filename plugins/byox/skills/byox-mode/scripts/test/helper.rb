@@ -10,6 +10,7 @@ module Fixture
   FAKE_AGENT = <<~RUBY
     require "json"
     File.write(ENV.fetch("FAKE_LOG"), JSON.generate({ "argv" => ARGV, "cwd" => Dir.pwd, "files" => Dir["**/*"].sort,
+                                                      "lesson" => (File.read("lesson.md") if File.exist?("lesson.md")),
                                                       "env" => ENV.to_h.slice("BYOX_JOB", "BYOX_TARGET", "BYOX_COURSE") }))
     puts "fake agent ran"
     target = ENV["BYOX_TARGET"]
