@@ -31,9 +31,9 @@ class CliTest < Minitest::Test
 
   def test_split_drops_section_headers_and_marks_empty_lectures
     t = File.join(@dir, "t.txt")
-    File.write(t, "=== Intro ===\n\n--- Gem Devise for authentication ---\nSo we add devise.\n=== Scrambled ===\n--- Useful links ---\n[No transcript available]\n")
+    File.write(t, "=== Intro ===\n\n--- Gem Devise for authentication ---\nSo we add devise.\n=== Scrambled ===\n--- Useful links ---\n[No transcript available]\n--- TEXT: add a table ---\n\n[No transcript available for this lecture]\n")
     code, out = byox("split", t, File.join(@dir, "lectures"))
-    assert_equal [0, "001\ttext\tGem Devise for authentication\n002\tempty\tUseful links\n"], [code, out]
+    assert_equal [0, "001\ttext\tGem Devise for authentication\n002\tempty\tUseful links\n003\tempty\tTEXT: add a table\n"], [code, out]
     assert_equal "Gem Devise for authentication\n\nSo we add devise.\n", File.read(File.join(@dir, "lectures", "001-gem-devise-for-authentication.txt"))
   end
 

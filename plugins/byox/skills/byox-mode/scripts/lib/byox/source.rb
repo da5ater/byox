@@ -26,7 +26,7 @@ module Byox
         no = format("%03d", i + 1)
         path = File.join(out_dir, "#{no}-#{slug(title)}.txt")
         File.write(path, "#{title}\n\n#{text.strip}\n")
-        Lecture.new(no:, title:, path:, empty: text.strip.empty? || text.strip == EMPTY)
+        Lecture.new(no:, title:, path:, empty: text.strip.empty? || text.strip.start_with?(EMPTY.delete_suffix("]")))
       end
     end
 
