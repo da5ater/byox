@@ -10,6 +10,16 @@ A course is ported when `stack.ported` is true in `course.md`, such as Corsego m
 4. Run the step's verify in `course/solution`. It must pass.
 5. `byox tag <course> <step>`. Then `byox strength <course> --step <step>` must print `ok`.
 
+## Run every generator yourself
+
+Port by running the same generator commands the step lists, in the solution worktree, with the same Ruby or runtime the learner will use. Then read what each one prints and diff what it wrote. The Corsego pilot found three things this way that no amount of reading the transcript would show.
+
+- The target stack may already do what the mentor did by hand. Rails 8.1 writes the mailer's `default_url_options` in development, so Devise's "add this" step becomes "check it is there".
+- A generator may leave a file that breaks the step's tests. Devise's `users.yml` fixture holds two empty users that collide on the unique email index.
+- A CLI bound to another Ruby skips post-install steps silently. `rails new` run through a `#!/usr/bin/ruby` binstub left out importmap, Turbo and Stimulus.
+
+Each finding becomes a gotcha, an instruction or a hint in the step.
+
 Writers of a ported course run in lesson order, because lesson N's port starts from lesson N-1's last tag.
 
 ## What may change
