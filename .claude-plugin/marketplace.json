@@ -1,0 +1,15 @@
+{
+  "name": "byox",
+  "owner": {
+    "name": "Mohamed Khater"
+  },
+  "description": "Turn transcripts, repos and articles into local CodeCrafters-style courses you build line by line.",
+  "plugins": [
+    {
+      "name": "byox",
+      "source": "./plugins/byox",
+      "description": "Build Your Own X mode. Compiles a source into a local course with tests, hints and a local site.",
+      "version": "0.1.0"
+    }
+  ]
+}
