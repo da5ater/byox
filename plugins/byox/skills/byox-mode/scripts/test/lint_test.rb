@@ -68,7 +68,7 @@ class LintTest < Minitest::Test
       loop do
         s = server.accept
         line = s.gets
-        s.gets until s.gets == "\r\n" rescue nil
+        while (h = s.gets) && h != "\r\n"; end
         code = line.include?("/dead") ? "404 Not Found" : "200 OK"
         s.write("HTTP/1.1 #{code}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
         s.close

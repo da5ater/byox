@@ -43,7 +43,8 @@ class AgentJobsTest < Minitest::Test
 
     ctx = Dir.mktmpdir
     input = Byox::JobInput.new(course: Fixture.course(@root), config: Fixture.config(@root), lesson: Fixture.course(@root).lesson("01-ping"),
-                               step: nil, section: nil, note: nil, failure_path: File.join(@app_dir, "course/.cache/verify/01.1.log"))
+                               step: nil, section: nil, note: nil, failure_path: File.join(@app_dir, "course/.cache/verify/01.1.log"),
+                               target: nil)
     built = Byox::AgentJobs.build_context(input, ctx)
     assert_includes File.read(File.join(built, "failure.txt")), "1 failures"
     assert_includes File.read(File.join(built, "learner.diff")), "+puts 'PING'"
@@ -69,6 +70,22 @@ class AgentJobsTest < Minitest::Test
     assert_equal true, done["restored"]
     assert_equal before, File.read(lesson_path)
     assert_equal 400, sse(api("/lessons/01-ping/unclear"), { "section" => "task" })[0]
+  end
+
+  def test_unclear_on_a_concept_page_rewrites_it_and_restores_a_broken_page
+    page = File.join(@root, "vault", "Concepts", "stdin-loop.md")
+    ENV["FAKE_MODE"] = "rewrite"
+    _, done = sse("/api/concepts/stdin-loop/unclear", { "section" => "How it works", "note" => "what reads?" })
+    assert_equal({ "exit" => 0, "restored" => false }, done)
+    assert_includes File.read(page), "A loop waits for and reads"
+    assert_equal File.join(@root, "vault", "Concepts"), fake["cwd"]
+    assert_equal File.read(File.join(Byox::PLUGIN_DIR, "skills/byox-teach/SKILL.md")), fake["argv"][fake["argv"].index("--append-system-prompt") + 1]
+
+    before = File.read(page)
+    ENV["FAKE_MODE"] = "break"
+    out, done = sse("/api/concepts/stdin-loop/unclear", { "section" => "Gotchas", "note" => "?" })
+    assert_includes out, "so the page was restored"
+    assert_equal [true, before], [done["restored"], File.read(page)]
   end
 
   def test_broken_runs_fix_lesson_then_lint_and_strength

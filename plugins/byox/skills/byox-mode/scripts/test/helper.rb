@@ -10,12 +10,12 @@ module Fixture
   FAKE_AGENT = <<~RUBY
     require "json"
     File.write(ENV.fetch("FAKE_LOG"), JSON.generate({ "argv" => ARGV, "cwd" => Dir.pwd, "files" => Dir["**/*"].sort,
-                                                      "env" => ENV.to_h.slice("BYOX_JOB", "BYOX_LESSON", "BYOX_COURSE") }))
+                                                      "env" => ENV.to_h.slice("BYOX_JOB", "BYOX_TARGET", "BYOX_COURSE") }))
     puts "fake agent ran"
-    lesson = ENV["BYOX_LESSON"]
+    target = ENV["BYOX_TARGET"]
     case ENV["FAKE_MODE"]
-    when "break" then File.write(lesson, "not a lesson")
-    when "rewrite" then File.write(lesson, File.read(lesson).sub("Redis is a server", "Redis is a database server"))
+    when "break" then File.write(target, "not a lesson")
+    when "rewrite" then File.write(target, File.read(target).sub("Redis is a server", "Redis is a database server").sub("A loop reads", "A loop waits for and reads"))
     when "sleep" then sleep 1.5
     end
   RUBY

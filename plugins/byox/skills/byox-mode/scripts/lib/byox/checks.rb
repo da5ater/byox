@@ -20,7 +20,6 @@ module Byox
     RANDOM = /SecureRandom|\brand\b|\bRandom\b|Faker|random|uuid|\$RANDOM|urandom|shuf\b/i
     LINK = %r{\]\((https?://[^)\s]+)\)}
 
-    # Lesson checks run per lesson; course checks run when no lesson is given.
     def lint(course, config, lesson: nil, offline: false)
       ids = lesson ? [lesson] : course.outline.map(&:id)
       findings = ids.flat_map { lint_lesson(course, config, _1, offline:) }

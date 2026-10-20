@@ -55,7 +55,7 @@ One `lesson-writer` per lesson, one `concept-reviewer`, one `course-auditor`. No
 |---|---|
 | `course/course.md` | You, the lead |
 | `course/lessons/<id>.md`, `course/tests/<step>/`, `course/verify/<step>.sh` | That lesson's writer. Later, `fix-lesson` or Unclear. |
-| `<vault>/Concepts/<slug>.md` | The writer of the owner lesson named in `course.md`, then the concept reviewer |
+| `<vault>/Concepts/<slug>.md` | The writer of the owner lesson named in `course.md`, then the concept reviewer. Later, Unclear. |
 | `course/solution/` | `byox new` and `byox tag`, called by you or by the writer in port mode |
 | `course/state.json`, `<vault>/Courses/<slug>.md`, `<vault>/resource-blocklist.md` | The site only. `byox sync` regenerates the course notes. |
 | `course/audit.md` | The course auditor |

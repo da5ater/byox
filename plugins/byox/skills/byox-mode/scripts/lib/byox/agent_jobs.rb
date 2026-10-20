@@ -3,7 +3,8 @@
 # Every runtime button that needs Claude is one row here, and AgentJobs.run is the
 # only caller of the configured agent command (byox.yml `agent_cmd`).
 module Byox
-  JobInput = Data.define(:course, :config, :lesson, :step, :section, :note, :failure_path)
+  # target is the one file the job may rewrite. It is snapshotted before the run.
+  JobInput = Data.define(:course, :config, :lesson, :step, :section, :note, :failure_path, :target)
 
   AgentJob = Data.define(:kind, :system_file, :allowed, :disallowed, :workdir, :prompt, :after)
 
@@ -24,12 +25,23 @@ module Byox
       kind: :unclear, system_file: "agents/lesson-writer.md", allowed: "Read,Edit,Glob,Grep",
       disallowed: "Bash,Write", workdir: :course,
       prompt: lambda { |j|
-        "Unclear mode. The learner marked the section '#{j.section}' of #{j.lesson.path} as unclear. " \
+        "Unclear mode. The learner marked the section '#{j.section}' of #{j.target} as unclear. " \
           "Their note: #{j.note}\nRewrite only that section, in place, following " \
           "#{File.join(PLUGIN_DIR, 'skills/byox-mode/references/course-format.md')}. Change nothing else. " \
           "Never add solution code."
       },
       after: :lint_or_restore
+    ),
+    # Rewrites one section of a concept page. The page is restored if a heading goes missing.
+    unclear_concept: AgentJob.new(
+      kind: :unclear_concept, system_file: "skills/byox-teach/SKILL.md", allowed: "Read,Edit,Glob,Grep",
+      disallowed: "Bash,Write", workdir: :vault,
+      prompt: lambda { |j|
+        "Unclear mode. The learner marked the section '#{j.section}' of the concept page #{j.target} as unclear. " \
+          "Their note: #{j.note}\nRewrite only that section, in place, with the writing rules of this skill and " \
+          "#{File.join(PLUGIN_DIR, 'skills/byox-mode/references/concept-rubric.md')}. Keep every heading."
+      },
+      after: :concept_or_restore
     ),
     # The compiler's fix-lesson playbook, headless. byox reruns lint and strength itself afterwards.
     broken: AgentJob.new(
@@ -56,9 +68,10 @@ module Byox
     def run(kind, input, &emit)
       job = AGENT_JOBS.fetch(kind)
       Dir.mktmpdir("byox-#{kind}-") do |tmp|
-        cwd = job.workdir == :context ? build_context(input, tmp) : input.course.dir
-        snapshot = File.read(input.lesson.path)
-        env = { "BYOX_JOB" => kind.to_s, "BYOX_COURSE" => input.course.dir, "BYOX_LESSON" => input.lesson.path }
+        cwd = { context: -> { build_context(input, tmp) }, vault: -> { input.config.concepts_dir },
+                course: -> { input.course.dir } }.fetch(job.workdir).call
+        snapshot = File.read(input.target)
+        env = { "BYOX_JOB" => kind.to_s, "BYOX_TARGET" => input.target, "BYOX_COURSE" => input.course&.dir }.compact
         code = Shell.stream(command(job, input), cwd:, env:, timeout: 900) { emit.call("line", { "text" => _1 }) }
         result = { "exit" => code }
         job.after ? result.merge(send(job.after, input, snapshot, &emit)) : result
@@ -94,10 +107,23 @@ module Byox
       findings = Checks.lint(input.course, input.config, lesson: input.lesson.id, offline: true)
       return { "restored" => false } if findings.empty?
 
-      File.write(input.lesson.path, snapshot)
+      File.write(input.target, snapshot)
       findings.each { yield "line", { "text" => "lint: #{_1}\n" } }
       yield "line", { "text" => "Lint failed, so the lesson was restored.\n" }
       { "restored" => true, "findings" => findings.map(&:to_s) }
+    end
+
+    def concept_or_restore(input, snapshot)
+      missing = begin
+        Concept.parse(input.target).missing_headings
+      rescue FormatError => e
+        [e.message]
+      end
+      return { "restored" => false } if missing.empty?
+
+      File.write(input.target, snapshot)
+      yield "line", { "text" => "Missing #{missing.join(', ')}, so the page was restored.\n" }
+      { "restored" => true, "findings" => missing }
     end
 
     def lint_and_strength(input, _snapshot)

@@ -242,8 +242,25 @@ async function concept(slug) {
   const c = await api(`/api/concepts/${enc(slug)}`);
   crumbs.textContent = `Concept / ${c.title}`;
   const where = c.where.map((w) => `<li><a href="#/c/${enc(w.course)}/${enc(w.lesson)}">${esc(w.course)}: ${esc(w.title)}</a></li>`).join("");
-  app.innerHTML = `<h1>${esc(c.title)}</h1>${md(c.body)}<h2>Where it shows up</h2><ul>${where || `<li class="muted">No lesson uses it yet.</li>`}</ul>`;
+  app.innerHTML = `<h1>${esc(c.title)}</h1>${md(c.body)}<h2>Where it shows up</h2><ul>${where || `<li class="muted">No lesson uses it yet.</li>`}</ul>
+    <pre class="output" id="job" hidden></pre>`;
+  [...app.querySelectorAll("h2")].slice(0, -1).forEach((h) => h.insertAdjacentHTML("beforeend", unclearButton(h.textContent)));
   renderMermaid(app);
+  app.onclick = async (ev) => {
+    const section = ev.target.closest("button")?.dataset.unclear;
+    const note = section && prompt(`What is unclear in ${section}?`);
+    if (!note) return;
+    const job = document.getElementById("job");
+    job.hidden = false;
+    job.textContent = "Working...\n";
+    try {
+      const res = await stream(`/api/concepts/${enc(slug)}/unclear`, { section, note }, (t) => { job.textContent += t; });
+      if (!res.restored) return concept(slug);
+      job.textContent += "\nThe rewrite broke the page, so it was rolled back.\n";
+    } catch (e) {
+      job.textContent += `\n${e.message}\n`;
+    }
+  };
 }
 
 async function route() {

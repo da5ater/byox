@@ -20,6 +20,7 @@ module Byox
       ["POST", "/api/courses/:course/lessons/:lesson/broken",     :broken],       # SSE, agent
       ["POST", "/api/courses/:course/lessons/:lesson/bad-resource", :bad_resource],
       ["GET",  "/api/concepts/:slug",                             :concept],
+      ["POST", "/api/concepts/:slug/unclear",                     :unclear_concept], # SSE, agent
     ].map do |verb, pattern, handler|
       rx = pattern.gsub(/\*(\w+)/, '(?<\1>.+)').gsub(/:(\w+)/, '(?<\1>[^/]+)')
       [verb, Regexp.new("\\A#{rx}\\z"), handler]
@@ -227,7 +228,8 @@ module Byox
         return Http.json(409, { "error" => "run Verify first" }) unless File.exist?(log)
 
         store_for(c).apply({ "type" => "feedback", "kind" => "explain", "lesson" => l.id, "step" => s.id })
-        agent_job(c, :explain, JobInput.new(course: c, config: @config, lesson: l, step: s, section: nil, note: nil, failure_path: log))
+        agent_job(c.dir, :explain, JobInput.new(course: c, config: @config, lesson: l, step: s, section: nil, note: nil,
+                                                 failure_path: log, target: l.path))
       end
 
       def unclear(req, course:, lesson:)
@@ -237,7 +239,8 @@ module Byox
         return Http.json(400, { "error" => "section and note are required" }) if section.empty? || note.strip.empty?
 
         store_for(c).apply({ "type" => "feedback", "kind" => "unclear", "lesson" => l.id, "section" => section, "note" => note })
-        agent_job(c, :unclear, JobInput.new(course: c, config: @config, lesson: l, step: nil, section:, note:, failure_path: nil))
+        agent_job(c.dir, :unclear, JobInput.new(course: c, config: @config, lesson: l, step: nil, section:, note:,
+                                                 failure_path: nil, target: l.path))
       end
 
       def broken(req, course:, lesson:)
@@ -247,8 +250,8 @@ module Byox
         step = l.steps.find { _1.id == req.body["step"].to_s }
         log = step && verify_log(c, step.id)
         store_for(c).apply({ "type" => "feedback", "kind" => "broken", "lesson" => l.id, "step" => step&.id, "note" => note })
-        agent_job(c, :broken, JobInput.new(course: c, config: @config, lesson: l, step:, section: nil, note:,
-                                           failure_path: log && File.exist?(log) ? log : nil))
+        agent_job(c.dir, :broken, JobInput.new(course: c, config: @config, lesson: l, step:, section: nil, note:,
+                                               failure_path: log && File.exist?(log) ? log : nil, target: l.path))
       end
 
       def bad_resource(req, course:, lesson:)
@@ -282,8 +285,19 @@ module Byox
         Http.json(200, { "slug" => slug, "title" => page.title, "body" => page.body, "where" => where })
       end
 
-      def agent_job(c, kind, input)
-        lock = @guard.synchronize { @job_locks[c.dir] }
+      def unclear_concept(req, slug:)
+        raise NotFound, "no concept #{slug}" unless slug.match?(/\A[a-z0-9-]+\z/) && File.exist?(@config.concept_path(slug))
+
+        section, note = req.body.values_at("section", "note").map(&:to_s)
+        return Http.json(400, { "error" => "section and note are required" }) if section.empty? || note.strip.empty?
+
+        agent_job(@config.concepts_dir, :unclear_concept, JobInput.new(course: nil, config: @config, lesson: nil, step: nil, section:,
+                                                                       note:, failure_path: nil, target: @config.concept_path(slug)))
+      end
+
+      # One agent job at a time per course, and one for the shared concept library.
+      def agent_job(key, kind, input)
+        lock = @guard.synchronize { @job_locks[key] }
         return Http.json(409, { "error" => "an agent job is already running for this course" }) unless lock.try_lock
 
         Http::Sse.new(lambda { |emit|
