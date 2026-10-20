@@ -16,7 +16,7 @@ a { color: var(--accent); }
 .top { display: flex; gap: 12px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .brand { font-weight: 700; text-decoration: none; color: var(--fg); }
 #crumbs { color: var(--muted); font-size: 14px; }
-main { max-width: 860px; margin: 0 auto; padding: 24px 16px 96px; }
+main { max-width: 860px; margin: 0 auto; padding: 24px 16px 96px; overflow-wrap: anywhere; }
 h1 { font-size: 28px; line-height: 1.2; margin: 0 0 8px; }
 h2 { font-size: 20px; margin: 32px 0 8px; display: flex; gap: 8px; align-items: center; }
 h3 { font-size: 17px; margin: 0; }
