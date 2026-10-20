@@ -265,6 +265,7 @@ async function concept(slug) {
 
 async function route() {
   const [, kind, a, b] = location.hash.split("/").map(decodeURIComponent);
+  document.getElementById("celebrate").hidden = true;
   app.onclick = null;
   try {
     if (kind === "c" && b) await lesson(a, b);
