@@ -39,3 +39,42 @@ module Fixture
     File.write(path, yield(File.read(path)))
   end
 end
+
+module SiteHelpers
+  def start_site(agent_cmd: nil)
+    @root = Fixture.build(agent_cmd:)
+    @site = Byox::Site.start(Fixture.config(@root), port: 0)
+    @app_dir = File.join(@root, "mini-redis")
+  end
+
+  def stop_site
+    @site&.stop
+    FileUtils.rm_rf(@root)
+  end
+
+  def http(verb, path, body = nil)
+    Net::HTTP.start("127.0.0.1", @site.port, read_timeout: 30) do |h|
+      req = verb == :get ? Net::HTTP::Get.new(path) : Net::HTTP::Post.new(path, "Content-Type" => "application/json")
+      req.body = JSON.generate(body) if body
+      res = h.request(req)
+      [res.code.to_i, res["content-type"], res.body]
+    end
+  end
+
+  def json(verb, path, body = nil)
+    code, _type, raw = http(verb, path, body)
+    [code, JSON.parse(raw)]
+  end
+
+  # Returns [lines, done] from an SSE response.
+  def sse(path, body = nil)
+    code, type, raw = http(:post, path, body)
+    return [code, JSON.parse(raw)] unless type == "text/event-stream"
+
+    events = raw.split("\n\n").map { |f| [f[/^event: (.*)$/, 1], JSON.parse(f[/^data: (.*)$/, 1])] }
+    [events.select { _1[0] == "line" }.map { _1[1]["text"] }.join, events.find { _1[0] == "done" }&.last]
+  end
+
+  def learner_writes(step) = File.write(File.join(@app_dir, "main.rb"), Fixture.solution_code(step))
+  def api(path) = "/api/courses/mini-redis#{path}"
+end
