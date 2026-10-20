@@ -1,0 +1,109 @@
+# frozen_string_literal: true
+
+require_relative "helper"
+
+class CliTest < Minitest::Test
+  BYOX = File.expand_path("../byox", __dir__)
+
+  def setup = @dir = Dir.mktmpdir("byox-cli-")
+  def teardown = FileUtils.rm_rf(@dir)
+
+  def byox(*args, env: {})
+    out, st = Open3.capture2e(env, BYOX, *args)
+    [st.exitstatus, out]
+  end
+
+  def git(dir, *args) = Open3.capture2("git", "-C", dir, "-c", "user.name=t", "-c", "user.email=t@t", *args).first
+
+  def upstream
+    repo = File.join(@dir, "upstream")
+    FileUtils.mkdir_p(repo)
+    git(repo, "init", "-q")
+    [["app.rb", "puts 1\n", "gem devise for authentication (log in, log out)"],
+     ["notes.txt", "x\n", "Misc"],
+     ["app.rb", "puts 2\n", "gem pundit - authorization for courses"]].each do |file, text, msg|
+      File.write(File.join(repo, file), text)
+      git(repo, "add", "-A")
+      git(repo, "commit", "-q", "-m", msg)
+    end
+    repo
+  end
+
+  def test_split_drops_section_headers_and_marks_empty_lectures
+    t = File.join(@dir, "t.txt")
+    File.write(t, "=== Intro ===\n\n--- Gem Devise for authentication ---\nSo we add devise.\n=== Scrambled ===\n--- Useful links ---\n[No transcript available]\n")
+    code, out = byox("split", t, File.join(@dir, "lectures"))
+    assert_equal [0, "001\ttext\tGem Devise for authentication\n002\tempty\tUseful links\n"], [code, out]
+    assert_equal "Gem Devise for authentication\n\nSo we add devise.\n", File.read(File.join(@dir, "lectures", "001-gem-devise-for-authentication.txt"))
+  end
+
+  def test_match_pairs_lectures_with_commits_in_order
+    repo = upstream
+    lectures = File.join(@dir, "lectures")
+    FileUtils.mkdir_p(lectures)
+    { "001-a.txt" => "Gem Devise for authentication", "002-b.txt" => "Cloud9 disk space", "003-c.txt" => "Gem Pundit: authorization for courses" }
+      .each { |f, title| File.write(File.join(lectures, f), "#{title}\n\ntext\n") }
+    code, out = byox("match", lectures, repo)
+    rows = out.lines.drop(1).map { _1.chomp.split("\t", -1) }
+    assert_equal 0, code
+    assert_equal ["gem devise for authentication (log in, log out)", "", "gem pundit - authorization for courses"], rows.map { _1[3] }
+  end
+
+  def test_new_scaffolds_stubs_once_and_never_overwrites
+    app = File.join(@dir, "corsego")
+    FileUtils.mkdir_p(File.join(app, "course"))
+    File.write(File.join(app, "course", "course.md"), <<~MD)
+      ---
+      title: Corsego
+      status: approved
+      lessons:
+        - id: 01-new-app
+          title: A new app
+          steps:
+            - {id: "01.1", title: Generate the app}
+      ---
+    MD
+    assert_equal 0, byox("new", app)[0]
+    lesson = File.join(app, "course", "lessons", "01-new-app.md")
+    assert_equal "Generate the app", Byox::Course.load(app).lesson("01-new-app").steps[0].title
+    assert_equal "base\n", git(File.join(app, "course", "solution"), "tag")
+    assert File.directory?(File.join(app, "course", "tests", "01.1"))
+
+    File.write(lesson, File.read(lesson).sub("## Task", "## Task\n\nWritten by a writer."))
+    assert_equal 0, byox("new", app)[0]
+    assert_includes File.read(lesson), "Written by a writer."
+    code, out = byox("lint", app, "--offline")
+    assert_equal 1, code
+    assert_includes out, "sections_present\t01-new-app\tlesson is still a stub"
+  end
+
+  def test_tag_from_upstream_commit
+    root = Fixture.build
+    repo = upstream
+    sha = git(repo, "rev-list", "--max-count=1", "HEAD~2").strip
+    app = File.join(root, "mini-redis")
+    code, out = byox("tag", app, "01.1", "--from", repo, sha, "--force")
+    assert_equal [0, "tagged step-01.1\n"], [code, out]
+    assert_equal "puts 1\n", git(File.join(app, "course", "solution"), "show", "step-01.1:app.rb")
+    assert_equal 2, byox("tag", app, "09.9")[0]
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
+
+  def test_sync_regenerates_course_notes_from_state
+    root = Fixture.build
+    File.write(File.join(root, "mini-redis", "course", "state.json"),
+               JSON.generate({ "steps" => { "01.1" => { "passed_at" => "t", "attempts" => 1 } } }))
+    code, out = byox("sync", "--root", root)
+    assert_equal [0, "#{root}/vault/Courses/mini-redis.md\n"], [code, out]
+    assert_includes File.read(out.strip), "Progress: 1 of 4 steps. Current: 01-ping Talk over stdin."
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
+
+  def test_unknown_command_prints_usage
+    code, out = byox("nope")
+    assert_equal 2, code
+    assert_includes out, "byox strength COURSE_DIR"
+  end
+end
