@@ -42,3 +42,9 @@ exec ruby course/tests/01.2/echo_test.rb
 ```
 
 The test runs `ruby main.rb` with a random word on stdin and compares the reply.
+
+## Rules every verify script follows
+
+- Call the interpreter explicitly: `ruby bin/rails test ...`, never `bin/rails test ...`. Some drives, such as NTFS, drop the executable bit, and the strength check runs exported copies.
+- Exit with a sentence the learner can act on when the app is not there yet, such as "There is no bin/rails in this folder yet. Generate the app here first (step 01.1)."
+- Run only the step's own tests, with a path into `course/tests/<step>`. The generated tests in the app's `test/` folder are not the learner's checks.

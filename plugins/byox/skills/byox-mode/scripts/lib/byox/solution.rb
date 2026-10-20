@@ -81,8 +81,19 @@ module Byox
         raise "cannot read #{sha} from #{repo}" unless ok
       end
       git(dir, "add", "-A")
+      mark_scripts_executable(dir)
       git(dir, *GIT_ID, "commit", "-q", "--allow-empty", "-m", step_id)
       git(dir, "tag", *(force ? ["-f"] : []), "step-#{step_id}")
+    end
+
+    # Drives like NTFS make git ignore file modes, so bin/rails lands as 100644 and an
+    # exported tree cannot run it. A shebang is the portable signal that a file is a script.
+    def mark_scripts_executable(dir)
+      scripts = git(dir, "ls-files", "-s").lines.filter_map do |line|
+        mode, _, _, path = line.chomp.split(/\s+/, 4)
+        path if mode == "100644" && File.open(File.join(dir, path), "rb") { _1.read(2) } == "#!"
+      end
+      scripts.each_slice(200) { git(dir, "update-index", "--chmod=+x", "--", *_1) }
     end
 
     def init(course)

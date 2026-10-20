@@ -119,6 +119,23 @@ class CliTest < Minitest::Test
     FileUtils.rm_rf(root) if root
   end
 
+  def test_tag_marks_shebang_files_executable_even_when_the_repo_ignores_file_modes
+    root = Fixture.build
+    app = File.join(root, "mini-redis")
+    sol = File.join(app, "course", "solution")
+    git(sol, "config", "core.filemode", "false")
+    FileUtils.mkdir_p(File.join(sol, "bin"))
+    File.write(File.join(sol, "bin", "rails"), "#!/usr/bin/env ruby\nputs 1\n")
+    File.chmod(0o644, File.join(sol, "bin", "rails"))
+    File.write(File.join(sol, "notes.txt"), "plain\n")
+    assert_equal 0, byox("tag", app, "01.1", "--force")[0]
+    modes = git(sol, "ls-tree", "-r", "step-01.1").lines.to_h { m, _, _, path = _1.split(/\s+/, 4); [path.strip, m] }
+    assert_equal "100755", modes["bin/rails"], "a shebang file must stay executable in exports"
+    assert_equal "100644", modes["notes.txt"]
+  ensure
+    FileUtils.rm_rf(root) if root
+  end
+
   def test_sync_regenerates_course_notes_from_state
     root = Fixture.build
     File.write(File.join(root, "mini-redis", "course", "state.json"),
