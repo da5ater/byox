@@ -32,35 +32,66 @@ module Byox
 
     def slug(text) = text.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-|-\z/, "")[0, 60]
 
-    def words(text) = text.downcase.scan(/[a-z0-9]+/).reject { _1.size < 2 }.uniq
+    STOP = %w[a an the to for and in of on with by from it is be at as or how use using add part pt gem].freeze
 
+    def words(text)
+      text.downcase.scan(/[a-z0-9]+/).map { _1.sub(/s\z/, "") }.reject { _1.size < 2 || STOP.include?(_1) }.uniq
+    end
+
+    # Overlap over the shorter title, because commit subjects are much shorter than lecture titles.
     def similarity(a, b)
       wa, wb = words(a), words(b)
       return 0.0 if wa.empty? || wb.empty?
 
-      (wa & wb).size.to_f / (wa | wb).size
+      (wa & wb).size.to_f / [wa.size, wb.size].min
     end
 
-    # Matches lecture titles to commit subjects in order. A lecture may only match a
-    # commit after the previous match, inside a window, so a repeated title cannot jump
-    # backwards. Rows below MIN are left unmatched for the lead to read by hand.
-    MIN = 0.3
-    WINDOW = 15
+    # Aligns lecture titles with commit subjects, both in order, maximizing the summed
+    # similarity of pairs at or above MIN. A global alignment keeps one tempting wrong
+    # pair from pushing every later lecture past its commit. A lecture without a transcript
+    # can still have a commit, so it matches too, at a discount that hands ties to its spoken twin.
+    MIN = 0.5
 
     def match(lectures_dir, repo, until_ref: "HEAD")
       log = Solution.git(repo, "log", "--reverse", "--format=%H%x09%s", until_ref).lines.map { _1.chomp.split("\t", 2) }
-      pos = 0
-      Dir[File.join(lectures_dir, "*.txt")].sort.map do |path|
-        title = File.open(path, &:gets).to_s.strip
-        no = File.basename(path)[/\A\d+/]
-        best = log[pos, WINDOW].to_a.each_with_index.map { |(sha, subj), i| [similarity(title, subj), i, sha, subj] }.max_by(&:first)
-        if best && best[0] >= MIN
-          pos += best[1] + 1
-          [no, title, best[2][0, 7], best[3], format("%.2f", best[0])]
-        else
-          [no, title, "", "", "0.00"]
+      lectures = Dir[File.join(lectures_dir, "*.txt")].sort.map do |path|
+        text = File.read(path)
+        title = text.lines.first.to_s.strip
+        empty = text.lines.drop(1).join.strip.then { _1.empty? || _1.start_with?(EMPTY.delete_suffix("]")) }
+        [File.basename(path)[/\A\d+/], title, empty]
+      end
+      pairs = align(lectures.map { |_, t, _| t }, log.map(&:last), discount: lectures.map { |_, _, e| e ? 0.99 : 1.0 })
+      lectures.each_with_index.map do |(no, title, _), i|
+        j = pairs[i]
+        j ? [no, title, log[j][0][0, 7], log[j][1], format("%.2f", similarity(title, log[j][1]))] : [no, title, "", "", "0.00"]
+      end
+    end
+
+    def align(titles, subjects, discount: Array.new(titles.size, 1.0))
+      n, m = titles.size, subjects.size
+      score = Array.new(n + 1) { Array.new(m + 1, 0.0) }
+      (1..n).each do |i|
+        (1..m).each do |j|
+          s = similarity(titles[i - 1], subjects[j - 1])
+          take = s >= MIN ? score[i - 1][j - 1] + s * discount[i - 1] : -1.0
+          score[i][j] = [score[i - 1][j], score[i][j - 1], take].max
         end
       end
+      pairs = {}
+      i, j = n, m
+      while i.positive? && j.positive?
+        s = similarity(titles[i - 1], subjects[j - 1])
+        if s >= MIN && (score[i][j] - (score[i - 1][j - 1] + s * discount[i - 1])).abs < 1e-9
+          pairs[i - 1] = j - 1
+          i -= 1
+          j -= 1
+        elsif score[i][j] == score[i - 1][j]
+          i -= 1
+        else
+          j -= 1
+        end
+      end
+      pairs
     end
   end
 end

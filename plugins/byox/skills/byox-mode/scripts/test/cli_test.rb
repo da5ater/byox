@@ -49,6 +49,35 @@ class CliTest < Minitest::Test
     assert_equal ["gem devise for authentication (log in, log out)", "", "gem pundit - authorization for courses"], rows.map { _1[3] }
   end
 
+  def test_match_aligns_corsego_titles_without_a_wrong_jump_derailing_later_rows
+    repo = File.join(@dir, "corsego")
+    FileUtils.mkdir_p(repo)
+    git(repo, "init", "-q")
+    ["first commit", "controller home index", "gem haml-rails", "gem bootstrap-rubygem", "scaffold Courses",
+     "install action_text", "gem faker", "gem devise", "add_users_to_courses relationship", "add_fields_to_courses",
+     "gem ransack for search in navbar"].each_with_index do |msg, i|
+      File.write(File.join(repo, "f.txt"), "#{i}\n")
+      git(repo, "add", "-A")
+      git(repo, "commit", "-q", "-m", msg)
+    end
+    lectures = File.join(@dir, "corsego-lectures")
+    FileUtils.mkdir_p(lectures)
+    ["hello world - generate a static page", "gem haml-rails - more RoR-friendly way of editing HTML",
+     "add a Courses table", "TEXT: add a Courses table", "action_text - rich text editor",
+     "gem devise for authentication (log in, log out)", "course belong_to user - relationships"].each_with_index do |title, i|
+      body = title.start_with?("TEXT:") ? "[No transcript available for this lecture]" : "words"
+      File.write(File.join(lectures, format("%03d-x.txt", i + 1)), "#{title}\n\n#{body}\n")
+    end
+    _, out = byox("match", lectures, repo)
+    got = out.lines.drop(1).to_h { r = _1.chomp.split("\t", -1); [r[1], r[3]] }
+    assert_equal "gem haml-rails", got["gem haml-rails - more RoR-friendly way of editing HTML"]
+    assert_equal "scaffold Courses", got["add a Courses table"]
+    assert_equal "", got["TEXT: add a Courses table"], "empty lectures carry no code"
+    assert_equal "install action_text", got["action_text - rich text editor"]
+    assert_equal "gem devise", got["gem devise for authentication (log in, log out)"]
+    assert_equal "add_users_to_courses relationship", got["course belong_to user - relationships"]
+  end
+
   def test_new_scaffolds_stubs_once_and_never_overwrites
     app = File.join(@dir, "corsego")
     FileUtils.mkdir_p(File.join(app, "course"))
