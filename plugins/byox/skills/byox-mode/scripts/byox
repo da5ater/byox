@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# One executable for every script byox owns. Ruby standard library only.
+$LOAD_PATH.unshift File.expand_path("lib", __dir__)
+require "byox"
+
+exit Byox::Cli.run(ARGV.dup)
