@@ -20,7 +20,7 @@ module Byox
 
   Resource = Data.define(:url, :section, :why)
 
-  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints) do
+  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values) do
     def tag = "step-#{id}"
     def tests_dir = "course/tests/#{id}"
   end
@@ -135,7 +135,8 @@ module Byox
       problems << [:three_hints, "#{where}: has #{hints.size} hints, needs 3"] unless hints.size == 3 && hints.none? { _1.strip.empty? }
       Step.new(id:, title: raw["title"].to_s, kind: raw["kind"].to_s, verify: raw["verify"].to_s,
                generators: Array(raw["generators"]).map(&:to_s), generated: Array(raw["generated"]).map(&:to_s),
-               instructions: raw["instructions"].to_s, gotchas: raw["gotchas"].to_s, hints:)
+               instructions: raw["instructions"].to_s, gotchas: raw["gotchas"].to_s, hints:,
+               fixed_values: raw["fixed_values"].to_s.strip)
     end
 
     def generated?(path, globs)

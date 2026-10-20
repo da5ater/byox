@@ -118,6 +118,16 @@ class LintTest < Minitest::Test
     assert_finding(:random_values_in_tests, "02.2")
   end
 
+  def test_fixed_values_with_a_reason_skips_the_random_check
+    File.write(File.join(@root, "mini-redis/course/tests/02.2/del_test.rb"), "assert_equal 'Corsego', name\n")
+    Fixture.edit_lesson(@root, "02-store") do |text|
+      text.sub(/(- id: ["']?02\.2["']?\n)(\s*)/) { "#{$1}#{$2}fixed_values: The module name is fixed by the task.\n#{$2}" }
+    end
+    findings = Byox::Checks.lint(Fixture.course(@root), Fixture.config(@root), lesson: "02-store", offline: true)
+    assert_includes File.read(File.join(@root, "mini-redis/course/lessons/02-store.md")), "fixed_values:"
+    assert_empty findings.select { _1.check == :random_values_in_tests }
+  end
+
   def test_concept_pages
     FileUtils.rm(File.join(@root, "vault", "Concepts", "key-value-store.md"))
     _, _, msg = assert_finding(:concept_pages, "02-store")

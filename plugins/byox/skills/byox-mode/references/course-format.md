@@ -131,6 +131,7 @@ The precise spec, as a short list.
 - Every step has `id`, `title`, `kind`, `verify`, `instructions` and exactly three `hints`. The parser rejects anything else, so the site never sees a step with two hints.
 - `verify` is one shell command run from the course dir. The site runs it and goes green on exit code 0. The learner could type it themselves.
 - `generators` lists commands like `bin/rails generate devise:install`. `generated` lists globs of the files they write, such as `db/migrate/*_devise_create_users.rb` or `test/**`. The solution view collapses those files, and the leak check ignores them.
+- `fixed_values` is optional. Set it to one sentence when the expected answer is fixed by the task and cannot be randomized, such as an app's module name or the root route. Lint then skips its random-values check for that step. An empty reason does not count.
 - Tests in plain English has one `**<step id>.**` paragraph per step. Say exactly what the check sends and what it expects, including which values are random.
 
 ### Hints

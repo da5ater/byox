@@ -65,7 +65,7 @@ module Byox
     def random_values_in_tests(course, lesson)
       lesson.steps.filter_map do |s|
         files = test_files(course, s)
-        next if s.kind == "cloud" || files.empty? || files.any? { File.read(_1).match?(RANDOM) }
+        next if s.kind == "cloud" || !s.fixed_values.empty? || files.empty? || files.any? { File.read(_1).match?(RANDOM) }
 
         Finding.new(:random_values_in_tests, s.id, "tests use no random values, so a hardcoded answer could pass")
       end
