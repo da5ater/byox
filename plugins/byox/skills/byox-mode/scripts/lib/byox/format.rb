@@ -141,7 +141,9 @@ module Byox
 
     def generated?(path, globs)
       globs.any? do |g|
-        g.end_with?("/**") ? path.start_with?(g.delete_suffix("**")) : File.fnmatch?(g, path, File::FNM_PATHNAME | File::FNM_EXTGLOB)
+        next true if g == "**"
+
+        g.end_with?("/**") ? path.start_with?(g.delete_suffix("**")) : File.fnmatch?(g, path, File::FNM_PATHNAME | File::FNM_EXTGLOB | File::FNM_DOTMATCH)
       end
     end
   end

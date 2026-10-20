@@ -58,4 +58,12 @@ class FormatTest < Minitest::Test
     assert Byox::Format.generated?("test/models/user_test.rb", ["test/**"])
     refute Byox::Format.generated?("app/models/user.rb", ["test/**", "db/*.rb"])
   end
+
+  def test_a_whole_tree_glob_covers_nested_files_and_dotfiles
+    %w[app/models/application_record.rb .gitignore .kamal/secrets config/routes.rb].each do |path|
+      assert Byox::Format.generated?(path, ["**"]), "** must cover #{path}"
+      assert Byox::Format.generated?(path, ["**/*"]), "**/* must cover #{path}"
+    end
+    assert Byox::Format.generated?(".github/workflows/ci.yml", [".github/**"])
+  end
 end
