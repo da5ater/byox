@@ -13,6 +13,7 @@ Run by the `feedback` agent. `B` is `skills/byox-mode/scripts/byox` in the repo 
    playwright screenshot --viewport-size=1280,800 --wait-for-timeout=1500 "http://127.0.0.1:4931/<page>" W/docs/feedback/D/<id>-before.png
    ```
    Add a phone shot at `--viewport-size=390,844` named `<id>-before-phone.png` when the item is about layout. Stop the site by its PID.
+   If `playwright` says its browser executable does not exist, run `playwright install chromium-headless-shell` once. Without Playwright, any Chrome or Chromium works: `<chrome> --headless=new --hide-scrollbars --window-size=1280,800 --virtual-time-budget=3000 --screenshot=<file> "<url>"`.
 8. **Make each change.** One item at a time. Write a failing test first when the item is behavior a test can see. Use the existing tests' style. A pure look-and-feel item is proven by its screenshots. Run `ruby W/plugins/byox/skills/byox-mode/scripts/test/run.rb` after each item. It must stay green. Commit each item on its own: `Feedback <id>: <what changed>`. If you cannot do an item, write down why and move on.
 9. **After screenshots, from `W`.** Use a fresh scratch root built the same way as in step 6. Start the site from `W` on port 4932, reach the same states, and take the same shots named `<id>-after.png` and `<id>-after-phone.png`. Stop it by its PID.
 10. **Write the log.** `W/docs/feedback/D/README.md` has one section per item: the learner's words, the page, what changed, and the before and after images by relative path. Commit it with the screenshots.
