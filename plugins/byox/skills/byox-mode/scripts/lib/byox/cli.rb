@@ -14,6 +14,7 @@ module Byox
         byox match    LECTURES_DIR REPO [--until REF]
         byox tag      COURSE_DIR STEP_ID [--from REPO SHA] [--force]
         byox sync     [--root DIR]
+        byox feedback add TEXT [--page HASH] | list [--open] | mark ID... --pr URL   [--root DIR]
       Exit codes: 0 ok, 1 check failed, 2 bad input.
     TXT
 
@@ -23,7 +24,7 @@ module Byox
 
     def run(argv)
       cmd = argv.shift
-      return usage unless %w[site lint strength new split match tag sync].include?(cmd)
+      return usage unless %w[site lint strength new split match tag sync feedback].include?(cmd)
 
       opts = {}
       args = OptionParser.new do |o|
@@ -35,6 +36,9 @@ module Byox
         o.on("--until REF") { opts[:until] = _1 }
         o.on("--from REPO") { opts[:from] = _1 }
         o.on("--force") { opts[:force] = true }
+        o.on("--page HASH") { opts[:page] = _1 }
+        o.on("--open") { opts[:open] = true }
+        o.on("--pr URL") { opts[:pr] = _1 }
       end.parse(argv)
       send("cmd_#{cmd}", args, opts)
     rescue OptionParser::ParseError, ArgumentError, FormatError => e
@@ -153,6 +157,26 @@ module Byox
       config.course_dirs.each do |dir|
         course = Course.load(dir)
         puts CourseNote.write(config, course, State.load(course.state_path))
+      end
+      0
+    end
+
+    def cmd_feedback(args, opts)
+      config = Config.load(opts[:root])
+      case args.shift
+      when "add"
+        item = Feedback.add(config, text: args.join(" "), page: opts[:page])
+        puts item.id
+      when "list"
+        items = opts[:open] ? Feedback.open(config) : Feedback.all(config)
+        puts %w[id status page text pr].join("\t")
+        items.each { |i| puts [i.id, i.status, i.page, i.text.tr("\t\n", "  "), i.pr].join("\t") }
+      when "mark"
+        raise ArgumentError, "mark needs ids and --pr URL" if args.empty? || opts[:pr].to_s.empty?
+
+        Feedback.mark(config, args, pr: opts[:pr])
+      else
+        return usage
       end
       0
     end

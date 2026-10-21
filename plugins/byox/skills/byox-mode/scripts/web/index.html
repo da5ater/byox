@@ -8,9 +8,19 @@
   <script src="/assets/vendor/marked.min.js"></script>
 </head>
 <body>
-  <header class="top"><a href="#/" class="brand">byox</a><span id="crumbs"></span></header>
+  <header class="top"><a href="#/" class="brand">byox</a><span id="crumbs"></span><button id="fb-open" class="link fb-open">Feedback</button></header>
   <main id="app"></main>
   <div id="celebrate" hidden></div>
+  <dialog id="fb">
+    <h2>Feedback on byox</h2>
+    <p class="muted">What should change, or what went wrong? The page you are on is saved with it.</p>
+    <textarea rows="4" placeholder="The Verify button is hard to find on a phone. Done when it sits right under each step."></textarea>
+    <div class="row"><button class="primary" data-save>Save</button><button data-close>Close</button></div>
+    <h3>Open items</h3>
+    <ul class="fb-list"></ul>
+    <div class="row"><button data-ship disabled>Send to a pull request</button></div>
+    <pre class="fb-out" hidden></pre>
+  </dialog>
   <script src="/assets/app.js"></script>
 </body>
 </html>

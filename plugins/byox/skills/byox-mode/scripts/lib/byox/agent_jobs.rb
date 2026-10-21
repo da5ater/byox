@@ -58,6 +58,18 @@ module Byox
       },
       after: :lint_and_strength
     ),
+    # Turns the open feedback into one pull request on the plugin's repo, with before and after screenshots.
+    feedback: AgentJob.new(
+      kind: :feedback, system_file: "agents/feedback.md", allowed: "Read,Edit,Write,Glob,Grep,Bash", disallowed: "",
+      workdir: :plugin_repo,
+      prompt: lambda { |j|
+        repo = j.config.plugin_repo ? "The local byox checkout is #{j.config.plugin_repo}." : "There is no local byox checkout."
+        "Ship mode. Process every open item in #{j.config.feedback_path} following " \
+          "#{File.join(PLUGIN_DIR, 'skills/byox-mode/playbooks/feedback.md')}. The courses root is #{j.config.root}. " \
+          "The upstream repo is #{j.config.upstream}. #{repo}"
+      },
+      after: nil
+    ),
   }.freeze
 
   module AgentJobs
@@ -75,8 +87,8 @@ module Byox
       job = AGENT_JOBS.fetch(kind)
       Dir.mktmpdir("byox-#{kind}-") do |tmp|
         cwd = { context: -> { build_context(input, tmp) }, vault: -> { input.config.concepts_dir },
-                course: -> { input.course.dir } }.fetch(job.workdir).call
-        snapshot = File.read(input.target)
+                course: -> { input.course.dir }, plugin_repo: -> { input.config.plugin_repo || FileUtils.mkdir_p(File.join(input.config.root, ".byox")).first } }.fetch(job.workdir).call
+        snapshot = input.target && File.read(input.target)
         env = { "BYOX_JOB" => kind.to_s, "BYOX_TARGET" => input.target, "BYOX_COURSE" => input.course&.dir }.compact
         code = Shell.stream(command(job, input), cwd:, env:, timeout: 900) { emit.call("line", { "text" => _1 }) }
         result = { "exit" => code }

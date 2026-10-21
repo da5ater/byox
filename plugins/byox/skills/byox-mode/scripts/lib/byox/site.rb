@@ -21,6 +21,9 @@ module Byox
       ["POST", "/api/courses/:course/lessons/:lesson/bad-resource", :bad_resource],
       ["GET",  "/api/concepts/:slug",                             :concept],
       ["POST", "/api/concepts/:slug/unclear",                     :unclear_concept], # SSE, agent
+      ["GET",  "/api/feedback",                                   :feedback_list],
+      ["POST", "/api/feedback",                                   :feedback_add],
+      ["POST", "/api/feedback/ship",                              :feedback_ship],   # SSE, agent
     ].map do |verb, pattern, handler|
       rx = pattern.gsub(/\*(\w+)/, '(?<\1>.+)').gsub(/:(\w+)/, '(?<\1>[^/]+)')
       [verb, Regexp.new("\\A#{rx}\\z"), handler]
@@ -293,6 +296,22 @@ module Byox
 
         agent_job(@config.concepts_dir, :unclear_concept, JobInput.new(course: nil, config: @config, lesson: nil, step: nil, section:,
                                                                        note:, failure_path: nil, target: @config.concept_path(slug)))
+      end
+
+      def feedback_list(_req) = Http.json(200, { "items" => Feedback.all(@config).map(&:to_h) })
+
+      def feedback_add(req)
+        item = Feedback.add(@config, text: req.body["text"], page: req.body["page"])
+        Http.json(200, { "item" => item.to_h, "open" => Feedback.open(@config).size })
+      rescue ArgumentError => e
+        Http.json(400, { "error" => e.message })
+      end
+
+      def feedback_ship(_req)
+        return Http.json(409, { "error" => "there is no open feedback to ship" }) if Feedback.open(@config).empty?
+
+        agent_job(:feedback, :feedback, JobInput.new(course: nil, config: @config, lesson: nil, step: nil, section: nil,
+                                                     note: nil, failure_path: nil, target: nil))
       end
 
       # One agent job at a time per course, and one for the shared concept library.

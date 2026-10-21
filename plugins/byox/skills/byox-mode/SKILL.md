@@ -30,6 +30,7 @@ Match the request, then open the playbook. Copy its steps into your todo list ve
 | An article URL or file | `playbooks/compile-article.md`, then `playbooks/compile.md` |
 | "start", "open my courses", first run | `playbooks/start-course.md` |
 | `fix-lesson <course-dir> <lesson-id>`, or "lesson N is broken" | `playbooks/fix-lesson.md` |
+| Feedback on byox itself: "change this", "this is broken", "ship my feedback" | the `feedback` agent. Gather mode talks it through, ship mode runs `playbooks/feedback.md` |
 
 Explain failure has no playbook. The site runs the `coach` agent directly.
 
@@ -41,9 +42,9 @@ Every course file follows `references/course-format.md`. The parser in `scripts/
 
 Paths:
 
-- Courses root: `byox.yml` sits here. Default `/run/media/mohamed/storage/MO/Projects/BuildYourOwnX`, overridden by `BYOX_ROOT`.
+- Courses root: `byox.yml` sits here. The `--root` flag, else `BYOX_ROOT`, else `~/byox-courses`.
 - A course: `<root>/<slug>/`. It is the learner's app and their own git repo. Course files live in `<root>/<slug>/course/`.
-- The vault: `vault:` in `byox.yml`. Default `/home/mohamed/ObsidianVault/1- resource/buildYourOwnXLessons`. See `references/obsidian-layout.md`.
+- The vault: `vault:` in `byox.yml`, such as a folder in an Obsidian vault. Default `<root>/vault`. See `references/obsidian-layout.md`.
 
 ## Agent budget
 

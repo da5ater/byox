@@ -1,10 +1,11 @@
 {
   "name": "byox",
   "displayName": "byox",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Build Your Own X mode. Turns a transcript, repo or article into a local CodeCrafters-style course you build line by line.",
   "author": {
-    "name": "Mohamed Khater"
+    "name": "da5ater",
+    "url": "https://github.com/da5ater"
   },
   "license": "MIT",
   "keywords": [
@@ -17,6 +18,9 @@
     "./agents/lesson-writer.md",
     "./agents/lesson-reviewer.md",
     "./agents/course-auditor.md",
-    "./agents/coach.md"
-  ]
+    "./agents/coach.md",
+    "./agents/feedback.md"
+  ],
+  "homepage": "https://github.com/da5ater/byox",
+  "repository": "https://github.com/da5ater/byox"
 }

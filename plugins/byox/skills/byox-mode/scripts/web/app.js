@@ -280,3 +280,43 @@ async function route() {
 
 addEventListener("hashchange", route);
 route();
+
+const fb = document.getElementById("fb");
+async function fbRefresh() {
+  const { items } = await api("/api/feedback");
+  const open = items.filter((i) => i.status === "open");
+  const shipped = items.filter((i) => i.status !== "open");
+  fb.querySelector(".fb-list").innerHTML = open.map((i) => `<li>${esc(i.text)} <span class="muted">${esc(i.page)}</span></li>`).join("")
+    + shipped.slice(-3).map((i) => `<li class="muted">${esc(i.text)} <a href="${esc(i.pr)}" target="_blank" rel="noopener">pull request</a></li>`).join("");
+  const ship = fb.querySelector("[data-ship]");
+  ship.disabled = open.length === 0;
+  ship.textContent = open.length ? `Send ${open.length} to a pull request` : "Nothing to send";
+}
+document.getElementById("fb-open").onclick = async () => { await fbRefresh(); fb.showModal(); fb.querySelector("textarea").focus(); };
+fb.onclick = async (ev) => {
+  const b = ev.target.closest("button");
+  if (!b) return;
+  const out = fb.querySelector(".fb-out");
+  try {
+    if (b.dataset.close !== undefined) return fb.close();
+    if (b.dataset.save !== undefined) {
+      const box = fb.querySelector("textarea");
+      if (!box.value.trim()) return box.focus();
+      await post("/api/feedback", { text: box.value, page: location.hash || "#/" });
+      box.value = "";
+      return fbRefresh();
+    }
+    if (b.dataset.ship !== undefined) {
+      if (!confirm("The feedback agent will change byox, take before and after screenshots, and open one pull request for review. Go?")) return;
+      b.disabled = true;
+      out.hidden = false;
+      out.textContent = "Working...\n";
+      const done = await stream("/api/feedback/ship", {}, (line) => { out.textContent += line; out.scrollTop = out.scrollHeight; });
+      out.textContent += done && done.exit === 0 ? "\nDone.\n" : "\nThe agent stopped. Read the output above.\n";
+      return fbRefresh();
+    }
+  } catch (e) {
+    out.hidden = false;
+    out.textContent += `${e.message}\n`;
+  }
+};

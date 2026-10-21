@@ -1,7 +1,8 @@
 {
   "name": "byox",
   "owner": {
-    "name": "Mohamed Khater"
+    "name": "da5ater",
+    "url": "https://github.com/da5ater"
   },
   "description": "Turn transcripts, repos and articles into local CodeCrafters-style courses you build line by line.",
   "plugins": [

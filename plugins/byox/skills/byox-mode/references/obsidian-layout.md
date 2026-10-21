@@ -1,15 +1,17 @@
 # Obsidian layout
 
-The vault folder is `vault:` in `<root>/byox.yml`. The default is `/home/mohamed/ObsidianVault/1- resource/buildYourOwnXLessons`.
+The vault folder is `vault:` in `<root>/byox.yml`. The default is `<root>/vault`. Point it at a folder inside an Obsidian vault to read concept pages and progress there.
 
 ## byox.yml
 
 ```yaml
-vault: /home/mohamed/ObsidianVault/1- resource/buildYourOwnXLessons
+vault: ~/Obsidian/MyVault/byox
 agent_cmd: claude -p
+upstream: da5ater/byox        # where feedback pull requests go
+plugin_repo: ~/code/byox      # optional local checkout of byox, used to ship feedback
 ```
 
-Both keys are optional. `agent_cmd` is the command every agent button runs. Swap it here and nowhere else.
+Every key is optional. `agent_cmd` is the command every agent button runs. Swap it here and nowhere else.
 
 ## Folder
 

@@ -5,11 +5,11 @@ Build Your Own X mode for Claude Code. byox turns a source you already have into
 ## Install
 
 ```
-/plugin marketplace add <path-to-this-repo-or-github-owner/repo>
+/plugin marketplace add da5ater/byox
 /plugin install byox@byox
 ```
 
-The site and the scripts need Ruby 3.4 and nothing else. There are no gems to install.
+The site and the scripts need Ruby 3.4 and nothing else. There are no gems to install. Screenshots for feedback pull requests use Playwright, and pull requests use the GitHub CLI, `gh`.
 
 ## Make a course
 
@@ -32,16 +32,24 @@ byox proposes an outline, asks about each external service, and waits for your a
 Or run the site yourself:
 
 ```
-~/.claude/plugins/cache/byox/byox/0.1.0/skills/byox-mode/scripts/byox site
+ruby <plugin dir>/skills/byox-mode/scripts/byox site
 ```
 
 Open `http://127.0.0.1:4917`. Read the lesson, write code in your editor, press Verify. A green step unlocks the next one. A green lesson unlocks the mentor's solution.
 
 ## Where things live
 
-- Courses: `<root>/<course>/`, where the root defaults to `/run/media/mohamed/storage/MO/Projects/BuildYourOwnX` and `BYOX_ROOT` overrides it.
-- Settings: `<root>/byox.yml`, with `vault:` for the Obsidian folder and `agent_cmd:` for the headless agent command (default `claude -p`).
-- Concept pages, progress notes, the learner profile and the resource blocklist: the Obsidian folder.
+- Courses: `<root>/<course>/`. The root is `--root`, else `BYOX_ROOT`, else `~/byox-courses`.
+- Settings: `<root>/byox.yml`. Every key is optional: `vault:` for concept pages and progress (default `<root>/vault`, point it into an Obsidian vault if you use one), `agent_cmd:` for the headless agent (default `claude -p`), `upstream:` for where feedback goes (default `da5ater/byox`), and `plugin_repo:` for a local checkout of byox.
+- Feedback you have not shipped yet: `<root>/.byox/feedback.jsonl`.
+
+## Feedback and contributing
+
+Something in byox looks wrong, or you want it to work differently? Press **Feedback** on any page of the site and say it in your own words. The page you were on is saved with it. Or tell Claude `/byox-mode I have feedback` and it asks you a few questions to make each item concrete.
+
+When you are ready, press **Send to a pull request**. The `feedback` agent makes each change, takes before and after screenshots of the page, and opens one pull request on `da5ater/byox`, from a fork when you cannot push here. The pull request shows every item with its screenshots, so it can be reviewed without running anything. Nothing is merged without review.
+
+Pull requests by hand are welcome too. Run the tests first.
 
 ## Develop
 
