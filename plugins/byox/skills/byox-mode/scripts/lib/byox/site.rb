@@ -24,6 +24,7 @@ module Byox
       ["GET",  "/api/feedback",                                   :feedback_list],
       ["POST", "/api/feedback",                                   :feedback_add],
       ["POST", "/api/feedback/ship",                              :feedback_ship],   # SSE, agent
+      ["POST", "/api/feedback/upload",                            :feedback_upload], # SSE, agent
     ].map do |verb, pattern, handler|
       rx = pattern.gsub(/\*(\w+)/, '(?<\1>.+)').gsub(/:(\w+)/, '(?<\1>[^/]+)')
       [verb, Regexp.new("\\A#{rx}\\z"), handler]
@@ -298,7 +299,16 @@ module Byox
                                                                        note:, failure_path: nil, target: @config.concept_path(slug)))
       end
 
-      def feedback_list(_req) = Http.json(200, { "items" => Feedback.all(@config).map(&:to_h) })
+      def feedback_list(_req) = Http.json(200, { "items" => Feedback.all(@config).map(&:to_h), "changes" => Feedback.changes(@config) })
+
+      def feedback_upload(_req)
+        changes = Feedback.changes(@config)
+        return Http.json(409, { "error" => "set plugin_repo in byox.yml to your byox checkout first" }) if changes.nil?
+        return Http.json(409, { "error" => "your byox checkout has no changes to upload" }) if changes.zero?
+
+        agent_job(:feedback, :feedback_upload, JobInput.new(course: nil, config: @config, lesson: nil, step: nil, section: nil,
+                                                            note: nil, failure_path: nil, target: nil))
+      end
 
       def feedback_add(req)
         item = Feedback.add(@config, text: req.body["text"], page: req.body["page"])

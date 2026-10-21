@@ -283,7 +283,11 @@ route();
 
 const fb = document.getElementById("fb");
 async function fbRefresh() {
-  const { items } = await api("/api/feedback");
+  const { items, changes } = await api("/api/feedback");
+  const box = fb.querySelector(".fb-changes");
+  box.hidden = changes === null || changes === undefined;
+  box.querySelector("p").textContent = changes ? `${changes} changed file${changes === 1 ? "" : "s"} in your byox checkout, not uploaded yet.` : "Your byox checkout has no changes.";
+  box.querySelector("[data-upload]").disabled = !changes;
   const open = items.filter((i) => i.status === "open");
   const shipped = items.filter((i) => i.status !== "open");
   fb.querySelector(".fb-list").innerHTML = open.map((i) => `<li>${esc(i.text)} <span class="muted">${esc(i.page)}</span></li>`).join("")
@@ -306,12 +310,16 @@ fb.onclick = async (ev) => {
       box.value = "";
       return fbRefresh();
     }
-    if (b.dataset.ship !== undefined) {
-      if (!confirm("The feedback agent will change byox, take before and after screenshots, and open one pull request for review. Go?")) return;
+    if (b.dataset.ship !== undefined || b.dataset.upload !== undefined) {
+      const upload = b.dataset.upload !== undefined;
+      const ask = upload
+        ? "The feedback agent will commit your changes on a new branch, take before and after screenshots, write how to test each one, and open one pull request. Go?"
+        : "The feedback agent will change byox, take before and after screenshots, and open one pull request for review. Go?";
+      if (!confirm(ask)) return;
       b.disabled = true;
       out.hidden = false;
       out.textContent = "Working...\n";
-      const done = await stream("/api/feedback/ship", {}, (line) => { out.textContent += line; out.scrollTop = out.scrollHeight; });
+      const done = await stream(upload ? "/api/feedback/upload" : "/api/feedback/ship", {}, (line) => { out.textContent += line; out.scrollTop = out.scrollHeight; });
       out.textContent += done && done.exit === 0 ? "\nDone.\n" : "\nThe agent stopped. Read the output above.\n";
       return fbRefresh();
     }

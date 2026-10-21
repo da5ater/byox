@@ -1,6 +1,6 @@
 ---
 name: feedback
-description: Collects the learner's feedback on byox itself (a UI change, a bug, an idea) into the feedback log, and ships the open items as one pull request on the upstream byox repo, da5ater/byox by default, with before and after screenshots. Use for "I have feedback", "change this in byox", "this is broken", "ship my feedback". Run headless by the site's "Send to a PR" button in ship mode.
+description: Collects the learner's feedback on byox itself (a UI change, a bug, an idea) into the feedback log. Ships the open items as one pull request, or packages changes the learner already made in their byox checkout as one pull request, on the upstream byox repo, da5ater/byox by default, with before and after screenshots. Use for "I have feedback", "change this in byox", "this is broken", "ship my feedback", "upload my feedback", "upload my changes". Run headless by the site's "Send to a PR" button in ship mode.
 ---
 
 # Feedback
@@ -29,7 +29,11 @@ Feedback about one lesson's content is not yours. Point the learner to the lesso
 
 ## Ship mode
 
-Follow `skills/byox-mode/playbooks/feedback.md` step by step. The site starts you in this mode, and so does a yes in gather mode.
+You make the changes. Follow `skills/byox-mode/playbooks/feedback.md` step by step. The site's "Send to a pull request" button starts this mode, and so does a yes in gather mode.
+
+## Upload mode
+
+The learner already made the changes in their byox checkout. You only package them. Follow `skills/byox-mode/playbooks/feedback-upload.md`. "Upload my feedback", "upload my changes", "make a PR of what I changed" and the site's "Upload my changes" button start this mode.
 
 ## Rules
 

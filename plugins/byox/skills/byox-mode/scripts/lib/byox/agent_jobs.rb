@@ -70,6 +70,17 @@ module Byox
       },
       after: nil
     ),
+    # Packages the changes the learner already made in their byox checkout as one pull request.
+    feedback_upload: AgentJob.new(
+      kind: :feedback_upload, system_file: "agents/feedback.md", allowed: "Read,Edit,Write,Glob,Grep,Bash", disallowed: "",
+      workdir: :plugin_repo,
+      prompt: lambda { |j|
+        "Upload mode. Package the changes in #{j.config.plugin_repo} as one pull request following " \
+          "#{File.join(PLUGIN_DIR, 'skills/byox-mode/playbooks/feedback-upload.md')}. The courses root is #{j.config.root}. " \
+          "The upstream repo is #{j.config.upstream}. Open notes from the learner are in #{j.config.feedback_path}."
+      },
+      after: nil
+    ),
   }.freeze
 
   module AgentJobs

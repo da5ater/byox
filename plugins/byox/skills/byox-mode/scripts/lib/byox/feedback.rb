@@ -41,6 +41,19 @@ module Byox
 
     def open(config) = all(config).select { _1.status == "open" }
 
+    # Files the learner changed in their byox checkout and has not shipped: uncommitted
+    # work plus commits that are not on origin/main yet. nil when there is no checkout.
+    def changes(config)
+      repo = config.plugin_repo
+      return nil unless repo && File.directory?(File.join(repo, ".git"))
+
+      git = ->(*a) { Open3.capture2("git", "-C", repo, *a, err: File::NULL).first }
+      dirty = git.("status", "--porcelain", "--untracked-files=all").lines.map { _1[3..].strip }
+      base = git.("rev-parse", "-q", "--verify", "origin/main").strip
+      committed = base.empty? ? [] : git.("diff", "--name-only", "#{base}...HEAD").lines.map(&:strip)
+      (dirty + committed).uniq.size
+    end
+
     def append(config, row)
       FileUtils.mkdir_p(File.dirname(config.feedback_path))
       File.open(config.feedback_path, "a") do |f|

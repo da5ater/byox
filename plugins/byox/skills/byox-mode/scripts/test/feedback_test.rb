@@ -89,3 +89,59 @@ class FeedbackDefaultsTest < Minitest::Test
     assert_equal File.expand_path("~/byox-courses"), Byox::Config.load.root
   end
 end
+
+class FeedbackUploadTest < Minitest::Test
+  include SiteHelpers
+
+  def setup
+    @root = Fixture.build
+    @repo = File.join(@root, "plugin-repo")
+    FileUtils.mkdir_p(@repo)
+    system("git", "-C", @repo, "init", "-q", "-b", "main")
+    File.write(File.join(@repo, "app.css"), "body { color: red; }\n")
+    system("git", "-C", @repo, "add", "-A")
+    system("git", "-C", @repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base")
+    File.open(File.join(@root, "byox.yml"), "a") { _1.puts("plugin_repo: #{@repo}") }
+    @log = File.join(@root, "fake.json")
+    ENV["FAKE_LOG"] = @log
+    @site = Byox::Site.start(Fixture.config(@root), port: 0)
+  end
+
+  def teardown
+    ENV.delete("FAKE_LOG")
+    stop_site
+  end
+
+  def test_upload_packages_the_learners_own_changes
+    _, before = json(:get, "/api/feedback")
+    assert_equal 0, before["changes"]
+    assert_equal 409, json(:post, "/api/feedback/upload")[0], "nothing changed yet"
+
+    File.write(File.join(@repo, "app.css"), "body { color: blue; }\n")
+    File.write(File.join(@repo, "new.js"), "console.log(1)\n")
+    _, after = json(:get, "/api/feedback")
+    assert_equal 2, after["changes"]
+
+    out, done = sse("/api/feedback/upload")
+    assert_equal ["fake agent ran\n", 0], [out, done["exit"]]
+    f = JSON.parse(File.read(@log))
+    assert_equal File.realpath(@repo), File.realpath(f["cwd"])
+    assert_match(/Upload mode/, f["argv"][0])
+    assert_includes f["argv"][0], "feedback-upload.md"
+  end
+end
+
+class FeedbackUploadWithoutRepoTest < Minitest::Test
+  include SiteHelpers
+
+  def setup = start_site
+  def teardown = stop_site
+
+  def test_upload_needs_a_local_checkout
+    _, body = json(:get, "/api/feedback")
+    assert_nil body["changes"]
+    code, err = json(:post, "/api/feedback/upload")
+    assert_equal 409, code
+    assert_match(/plugin_repo/, err["error"])
+  end
+end
