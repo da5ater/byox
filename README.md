@@ -1,66 +1,136 @@
 # byox
 
-Build Your Own X mode for Claude Code. byox turns a source you already have into a local course in the style of CodeCrafters. The source can be a mentor's transcript, a repo's history, or a Build Your Own X article. You write every line of the code. Each step has its own test that you run with a Verify button on a local site.
+Turn any tutorial you own into a CodeCrafters-style course you build line by line.
 
-## Install
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757.svg)](https://code.claude.com/docs/en/plugins)
+![Ruby 3.4](https://img.shields.io/badge/ruby-3.4-red.svg)
+
+![A byox lesson: goal, short read, tests in plain English, and a step with gotchas, a revealed hint and a Verify button](docs/images/lesson.png)
+
+## About
+
+Watching a course feels like learning. Then an interviewer asks what you built, and there is nothing to show. CodeCrafters fixed that for a few projects by cutting everything except the code: a task, a test, a green check. But it is paid, it has no frontend or cloud tracks, and it cannot use the material you already have.
+
+byox is **Build Your Own X mode** for [Claude Code](https://code.claude.com). Give it a source you have, such as a recorded mentor session, a Udemy transcript, an open source repo's early history, or a Build Your Own X article. It compiles a local course: lessons in the source's order, a test for every step, and a site with a Verify button. You write every line. The agent never writes your solution.
+
+## Features
+
+- **Any source.** Transcripts (matched to the mentor's repo when one exists), repo history grouped into lessons, or articles.
+- **A test for every step, proven.** Each step's test must fail on the mentor's code before the step and pass after it. A script checks this, so a weak test never ships.
+- **Lessons that teach, not just tell.** A short read, the precise task, what the check does in plain English, ordered steps without code, gotchas, and three hints revealed one at a time.
+- **Real reading, not reference docs.** Each lesson points at the exact section of a human-written article or guide. Optional deep-dive concept pages build the idea up diagram by diagram.
+- **Written twice.** One agent writes each lesson. A second agent builds it as a learner from the page alone, scores it, and fixes what it finds.
+- **Ported to today's stack.** A Rails 6 course can become a Rails 8 course. The step tests prove the port behaves the same.
+- **Stuck help that never cheats.** Explain failure runs a coach that cannot read the solution or your unrevealed hints.
+- **Progress in Obsidian.** Concept pages, a weakness log and your progress can live in your vault.
+- **Feedback straight to a pull request.** Tell byox what to change, or change it yourself, and the feedback agent opens one pull request with before and after screenshots.
+
+## Requirements
+
+- [Claude Code](https://code.claude.com)
+- Ruby 3.4 or newer. byox uses only the standard library, so there are no gems to install.
+- Git
+- Optional, for feedback pull requests: the [GitHub CLI](https://cli.github.com) (`gh`) and [Playwright](https://playwright.dev), or any Chrome or Chromium for screenshots.
+
+## Installation
+
+In Claude Code:
 
 ```
 /plugin marketplace add da5ater/byox
 /plugin install byox@byox
 ```
 
-The site and the scripts need Ruby 3.4 and nothing else. There are no gems to install. Screenshots for feedback pull requests use Playwright, and pull requests use the GitHub CLI, `gh`.
+## Usage
 
-## Make a course
+### Compile a course
 
-Give the source, the language and the stack in your own words.
+Name the source, the language and the stack in your own words. byox asks only for what you leave out.
 
 ```
-/byox-mode this transcript ~/Downloads/udemy_transcript_2519558.txt, Rails 8, RSpec
+/byox-mode this transcript ~/Downloads/my-course-transcript.txt, Rails 8, Minitest
 /byox-mode this repo https://github.com/sidekiq/sidekiq, cut off at v0.5.0
 /byox-mode this article https://example.com/build-your-own-redis
 ```
 
-byox proposes an outline, asks about each external service, and waits for your approval. Then it writes one lesson per writer agent, lints every lesson, checks that every step's tests fail before the step and pass after it, reviews the concept pages, and audits the course against its source.
+byox proposes an outline and asks, per paid service such as Stripe or AWS, whether to use a real account, a free tier or a stub. It waits for your approval, then writes the course.
 
-## Take a course
+### Take a course
 
 ```
 /byox-mode start
 ```
 
-Or run the site yourself:
+This opens the site at http://127.0.0.1:4917. The loop:
 
+1. Read the lesson.
+2. Write the code in your own editor.
+3. Press **Verify**. Green unlocks the next step.
+4. Stuck? Reveal a hint, or press **Explain failure**.
+5. A green lesson unlocks the mentor's solution and a diff against your code.
+
+### What a lesson contains
+
+| Section | What it gives you |
+|---|---|
+| Goal | What works when you finish, in two lines |
+| Short read | About two minutes on why, rewritten from the source with the rambling removed |
+| Task | The precise spec |
+| Tests in plain English | What the check sends and what it expects |
+| Steps | Ordered instructions without code, gotchas, three hints and a Verify button |
+| Resource | One article or guide, at the exact section |
+| Go deep | Concept pages for the ideas the lesson uses |
+| Mentor's solution | Locked until the lesson is green or skipped |
+
+## Configuration
+
+Courses live under a root folder: the `--root` flag, else `BYOX_ROOT`, else `~/byox-courses`. An optional `byox.yml` in that folder sets the rest.
+
+```yaml
+vault: ~/Obsidian/MyVault/byox     # concept pages and progress notes. Default: <root>/vault
+agent_cmd: claude -p               # the headless agent behind the site's buttons
+upstream: da5ater/byox             # where feedback pull requests go
+plugin_repo: ~/code/byox           # your local checkout of byox, for uploading your own changes
 ```
-ruby <plugin dir>/skills/byox-mode/scripts/byox site
-```
-
-Open `http://127.0.0.1:4917`. Read the lesson, write code in your editor, press Verify. A green step unlocks the next one. A green lesson unlocks the mentor's solution.
-
-## Where things live
-
-- Courses: `<root>/<course>/`. The root is `--root`, else `BYOX_ROOT`, else `~/byox-courses`.
-- Settings: `<root>/byox.yml`. Every key is optional: `vault:` for concept pages and progress (default `<root>/vault`, point it into an Obsidian vault if you use one), `agent_cmd:` for the headless agent (default `claude -p`), `upstream:` for where feedback goes (default `da5ater/byox`), and `plugin_repo:` for a local checkout of byox.
-- Feedback you have not shipped yet: `<root>/.byox/feedback.jsonl`.
 
 ## Feedback and contributing
 
-Something in byox looks wrong, or you want it to work differently? Press **Feedback** on any page of the site and say it in your own words. The page you were on is saved with it. Or tell Claude `/byox-mode I have feedback` and it asks you a few questions to make each item concrete.
+byox improves from the people who use it. There are two ways to send a change, and both end in one pull request on this repo with before and after screenshots and steps to try it.
 
-When you are ready, press **Send to a pull request**. The `feedback` agent makes each change, takes before and after screenshots of the page, and opens one pull request on `da5ater/byox`, from a fork when you cannot push here. The pull request shows every item with its screenshots, so it can be reviewed without running anything. Nothing is merged without review.
+- **Say what should change.** Press **Feedback** on any page of the site, or tell Claude `/byox-mode I have feedback`. When you are ready, press **Send to a pull request** and the feedback agent makes the changes.
+- **Change it yourself.** Edit your checkout of byox as you go, set `plugin_repo` in `byox.yml`, then say `/byox-mode upload my feedback` or press **Upload my changes**. The agent packages your work. It does not rewrite it.
 
-Pull requests by hand are welcome too. Run the tests first.
+If you cannot push to this repo, the agent opens the pull request from your fork. Nothing is merged without review. Pull requests by hand are welcome too.
 
-## Develop
+### Development
 
-```
+```bash
+git clone https://github.com/da5ater/byox && cd byox
 ruby plugins/byox/skills/byox-mode/scripts/test/run.rb
-ruby plugins/byox/skills/byox-mode/scripts/test/fixtures/make_mini_redis.rb /tmp/byox-demo
-plugins/byox/skills/byox-mode/scripts/byox site --root /tmp/byox-demo
 ```
 
-The fixture builds a two-lesson "mini-redis" course with a real solution repo, tests and concept pages.
+Try the site on a small example course, a two-lesson Redis clone over stdin:
+
+```bash
+ruby plugins/byox/skills/byox-mode/scripts/test/fixtures/make_mini_redis.rb /tmp/byox-demo
+ruby plugins/byox/skills/byox-mode/scripts/byox site --root /tmp/byox-demo
+```
+
+The plugin lives in `plugins/byox/`. `skills/byox-mode/` holds the entry skill, its playbooks and references, and the `byox` executable. `agents/` holds the lesson writer, the lesson reviewer, the course auditor, the coach and the feedback agent.
+
+## Roadmap
+
+- A frontend course compiled from an open source repo, with design checks against its Storybook.
+- Cloud and DevOps lessons verified by CLI scripts.
+- Shareable compiled courses, so one person's compile helps everyone with the same source.
+
+## Acknowledgments
+
+- [CodeCrafters](https://codecrafters.io) and [shipthatcode](https://shipthatcode.com), for showing how far a task, a test and a green check can go.
+- [Build Your Own X](https://github.com/codecrafters-io/build-your-own-x), for the idea in the name.
+- The `byox-teach` skill is adapted from the teach skill in [pstack](https://github.com/michael-denyer/pstack-claude) by Lauren Tan and Michael Denyer, under the MIT license.
 
 ## License
 
-MIT, see `LICENSE`. `plugins/byox/skills/byox-teach` is adapted from pstack's teach skill, MIT, see its `LICENSE-pstack`.
+byox is licensed under the MIT license. See [`LICENSE`](LICENSE).
