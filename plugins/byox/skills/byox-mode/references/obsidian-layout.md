@@ -39,7 +39,7 @@ The site regenerates it whole from `course/state.json` after every state change.
 - Background jobs
 ```
 
-Writers and the concept reviewer read it to skip what the learner knows. The site never writes it.
+Writers and reviewers read it to skip what the learner knows. The site never writes it.
 
 ## resource-blocklist.md
 

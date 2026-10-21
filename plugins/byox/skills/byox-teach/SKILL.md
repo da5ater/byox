@@ -1,6 +1,6 @@
 ---
 name: byox-teach
-description: "Writes one byox concept page so a learner actually understands the concept. Used by the lesson-writer at compile time and by the concept-reviewer when it rewrites a page. Reads the source chapter, the mentor's diff and the chosen resources, then writes the page once to the vault."
+description: "Writes one byox concept page so a learner actually understands the concept. Used by the lesson-writer at compile time and by the lesson-reviewer when it rewrites a page. Reads the source chapter, the mentor's diff and the chosen resources, then writes the page once to the vault."
 user-invocable: false
 ---
 
