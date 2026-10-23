@@ -145,3 +145,37 @@ class FeedbackUploadWithoutRepoTest < Minitest::Test
     assert_match(/plugin_repo/, err["error"])
   end
 end
+
+class AddLessonsTest < Minitest::Test
+  include SiteHelpers
+
+  def setup
+    start_site
+    @log = File.join(@root, "fake.json")
+    ENV["FAKE_LOG"] = @log
+  end
+
+  def teardown
+    ENV.delete("FAKE_LOG")
+    stop_site
+  end
+
+  def test_the_site_asks_the_agent_to_add_lessons_to_a_course
+    assert_equal 400, json(:post, api("/add-lessons"), { "request" => "  " })[0]
+    request = "Add the next 5 lectures of the transcript at ~/Downloads/more.txt"
+    out, done = sse(api("/add-lessons"), { "request" => request })
+    assert_equal ["fake agent ran\n", 0], [out, done["exit"]]
+    f = JSON.parse(File.read(@log))
+    assert_equal File.realpath(@app_dir), File.realpath(f["cwd"])
+    assert_equal "add_lessons", f["env"]["BYOX_JOB"]
+    prompt = f["argv"][0]
+    assert_includes prompt, request
+    assert_includes prompt, "add-lessons.md"
+    assert_includes prompt, @app_dir
+    assert_includes f["argv"][f["argv"].index("--allowedTools") + 1].split(","), "Agent"
+  end
+
+  def test_an_unknown_course_is_not_found
+    assert_equal 404, json(:post, "/api/courses/nope/add-lessons", { "request" => "more" })[0]
+  end
+end

@@ -19,6 +19,7 @@ module Byox
       ["POST", "/api/courses/:course/lessons/:lesson/unclear",    :unclear],      # SSE, agent
       ["POST", "/api/courses/:course/lessons/:lesson/broken",     :broken],       # SSE, agent
       ["POST", "/api/courses/:course/lessons/:lesson/bad-resource", :bad_resource],
+      ["POST", "/api/courses/:course/add-lessons",                :add_lessons],     # SSE, agent
       ["GET",  "/api/concepts/:slug",                             :concept],
       ["POST", "/api/concepts/:slug/unclear",                     :unclear_concept], # SSE, agent
       ["GET",  "/api/courses/:course/files/*path",                :course_file],
@@ -317,6 +318,15 @@ module Byox
 
         agent_job(@config.concepts_dir, :unclear_concept, JobInput.new(course: nil, config: @config, lesson: nil, step: nil, section:,
                                                                        note:, failure_path: nil, target: @config.concept_path(slug)))
+      end
+
+      def add_lessons(req, course:)
+        c = load_course(course)
+        request = req.body["request"].to_s.strip
+        return Http.json(400, { "error" => "say what to add, such as a source or the next chapters" }) if request.empty?
+
+        agent_job(c.dir, :add_lessons, JobInput.new(course: c, config: @config, lesson: nil, step: nil, section: nil, note: request,
+                                                    failure_path: nil, target: nil))
       end
 
       def feedback_list(_req) = Http.json(200, { "items" => Feedback.all(@config).map(&:to_h), "changes" => Feedback.changes(@config) })

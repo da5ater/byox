@@ -48,6 +48,17 @@ module Byox
       },
       after: :concept_or_restore
     ),
+    # Adds lessons to a compiled course. The agent follows the add-lessons playbook, which
+    # spawns one writer and one reviewer per new lesson, so Agent is allowed here.
+    add_lessons: AgentJob.new(
+      kind: :add_lessons, system_file: "skills/byox-mode/playbooks/add-lessons.md",
+      allowed: "Read,Edit,Write,Glob,Grep,Bash,Agent", disallowed: "", workdir: :course,
+      prompt: lambda { |j|
+        "/byox-mode add lessons to the course at #{j.course.dir}, following " \
+          "#{File.join(PLUGIN_DIR, 'skills/byox-mode/playbooks/add-lessons.md')}.\nThe learner asks: #{j.note}"
+      },
+      after: nil
+    ),
     # The compiler's fix-lesson playbook, headless. byox reruns lint and strength itself afterwards.
     broken: AgentJob.new(
       kind: :broken, system_file: "skills/byox-mode/playbooks/fix-lesson.md",

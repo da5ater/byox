@@ -31,6 +31,7 @@ Match the request, then open the playbook. Copy its steps into your todo list ve
 | "start", "open my courses", first run | `playbooks/start-course.md` |
 | `fix-lesson <course-dir> <lesson-id>`, or "lesson N is broken" | `playbooks/fix-lesson.md` |
 | Feedback on byox itself: "change this", "this is broken", "ship my feedback" | the `feedback` agent. Gather mode talks it through, ship mode runs `playbooks/feedback.md` |
+| "Add more lessons to my course": more chapters, a new source, a feature | `playbooks/add-lessons.md` |
 | "Upload my feedback", "upload my changes": the learner changed byox themselves | the `feedback` agent in upload mode, `playbooks/feedback-upload.md` |
 
 Explain failure has no playbook. The site runs the `coach` agent directly.
