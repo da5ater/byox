@@ -110,6 +110,16 @@ class VisualSiteTest < Minitest::Test
     _, body = json(:get, api("/lessons/01-ping"))
     assert_equal api("/files/course/.cache/diff-01.1.png"), body["steps"][0]["diff"]
 
+    assert_nil body["steps"][0]["design_phone"]
+    assert_nil body["steps"][0]["design_source"]
+    File.binwrite(File.join(@app_dir, "course/tests/01.1/target-phone.png"), Byox::Png.encode([[[9, 9, 9, 255]]]))
+    FileUtils.mkdir_p(File.join(@app_dir, "course/design/01.1"))
+    File.write(File.join(@app_dir, "course/design/01.1/design.html"), "<h1>design</h1>")
+    _, body = json(:get, api("/lessons/01-ping"))
+    assert_equal api("/files/course/tests/01.1/target-phone.png"), body["steps"][0]["design_phone"]
+    assert_equal "course/design/01.1/design.html", body["steps"][0]["design_source"], "the learner opens the design file from disk"
+    assert_equal 404, http(:get, api("/files/course/design/01.1/design.html"))[0], "agent-written HTML is never served from the site's origin"
+
     code, type, raw = http(:get, api("/files/course/tests/01.1/target.png"))
     assert_equal [200, "image/png"], [code, type]
     assert_equal [[[0, 0, 0, 255]]], Byox::Png.decode(raw)
