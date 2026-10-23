@@ -6,7 +6,7 @@ Turn any tutorial you own into a CodeCrafters-style course you build line by lin
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757.svg)](https://code.claude.com/docs/en/plugins)
 ![Ruby 3.4](https://img.shields.io/badge/ruby-3.4-red.svg)
 
-![A byox lesson: goal, short read, tests in plain English, and a step with gotchas, a revealed hint and a Verify button](docs/images/lesson.png)
+![The byox course map: each lesson is a node on a rail, and each step is a commit that turns green when you verify it](docs/images/map.png)
 
 ## About
 
@@ -21,8 +21,11 @@ byox is **Build Your Own X mode** for [Claude Code](https://code.claude.com). Gi
 - **Lessons that teach, not just tell.** A short read, the precise task, what the check does in plain English, ordered steps without code, gotchas, and three hints revealed one at a time.
 - **Real reading, not reference docs.** Each lesson points at the exact section of a human-written article or guide. Optional deep-dive concept pages build the idea up diagram by diagram.
 - **Written twice.** One agent writes each lesson. A second agent builds it as a learner from the page alone, scores it, and fixes what it finds.
+- **Frontend steps arrive as a design.** The agent hands you a design file you inspect like a Figma file, plus desktop and phone targets. Verify screenshots your page and shows where it differs in red. No design software or account is needed.
+- **Cloud and DevOps steps run the real CLI.** A bash check per step, boot.dev style, prints what passed and what it expected against what it got. It runs against your cloud account or a free local emulator.
 - **Ported to today's stack.** A Rails 6 course can become a Rails 8 course. The step tests prove the port behaves the same.
 - **Stuck help that never cheats.** Explain failure runs a coach that cannot read the solution or your unrevealed hints.
+- **A workbench that keeps your place.** Continue where you left off, a light or dark theme that sticks, and an **Add lessons** box that asks the agent for more chapters or a new feature without taking your course offline.
 - **Progress in Obsidian.** Concept pages, a weakness log and your progress can live in your vault.
 - **Feedback straight to a pull request.** Tell byox what to change, or change it yourself, and the feedback agent opens one pull request with before and after screenshots.
 
@@ -70,6 +73,10 @@ This opens the site at http://127.0.0.1:4917. The loop:
 4. Stuck? Reveal a hint, or press **Explain failure**.
 5. A green lesson unlocks the mentor's solution and a diff against your code.
 
+### Add more lessons later
+
+Press **Add lessons** on a course page and say what you want: the next chapters of your source, a new source, or a feature. The agent writes each new lesson, has a second agent review it, and releases them in order. Lessons that are still being written show as "being written" and stay locked.
+
 ### What a lesson contains
 
 | Section | What it gives you |
@@ -82,6 +89,13 @@ This opens the site at http://127.0.0.1:4917. The loop:
 | Resource | One article or guide, at the exact section |
 | Go deep | Concept pages for the ideas the lesson uses |
 | Mentor's solution | Locked until the lesson is green or skipped |
+
+![A lesson in the example course: goal, short read, tests in plain English, and a step with a revealed hint and a Verify button](docs/images/lesson.png)
+
+### Frontend and cloud steps
+
+- **Frontend.** Each step ships `course/design/<step>/design.html`, a self-contained design with its colors, type and spacing in CSS variables. Open it and use Inspect. The lesson shows the desktop and phone targets. Verify starts your app, takes screenshots with headless Chrome and compares them, and prints the percentage of pixels that differ. `byox shot` and `byox visual-diff` are the two tools behind it.
+- **Cloud and DevOps.** Each step ships a bash script that runs the real CLI and checks its output. The AWS CLI reads `AWS_ENDPOINT_URL`, so the same script works against a free local emulator such as [Floci](https://github.com/floci-io/floci), which needs no account, and against real AWS.
 
 ## Configuration
 

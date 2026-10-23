@@ -55,42 +55,104 @@ function filesHtml(files) {
     : `<h4>${esc(f.path)}</h4>${diffHtml(f.patch)}`).join("");
 }
 
+const STATUS_LABEL = { green: "done", open: "open", locked: "locked", skipped: "skipped", building: "being written" };
+const lastCourse = () => { try { return localStorage.getItem("byox.last"); } catch { return null; } };
+const rememberCourse = (slug) => { try { localStorage.setItem("byox.last", slug); } catch { /* private window */ } };
+
+function ticks(done, total) {
+  if (!total) return "";
+  if (total > 60) return `<div class="ticks" aria-hidden="true"><i class="done" style="width:${Math.round((100 * done) / total)}%;height:9px;border-radius:2px"></i></div>`;
+  return `<div class="ticks" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < done ? "done" : ""}"></i>`).join("")}</div>`;
+}
+
 async function home() {
   crumbs.textContent = "";
   const { courses } = await api("/api/courses");
-  app.innerHTML = `<h1>Your courses</h1>` + (courses.length ? courses.map((c) => {
-    const pct = c.progress.total ? Math.round((100 * c.progress.done) / c.progress.total) : 0;
-    const next = c.current ? `<a href="#/c/${enc(c.slug)}/${enc(c.current.id)}">Continue: ${esc(c.current.title)}</a>` : `<span class="muted">Finished</span>`;
-    return `<div class="card"><h3><a href="#/c/${enc(c.slug)}">${esc(c.title)}</a></h3>
-      <p class="muted">${c.progress.done} of ${c.progress.total} steps</p><div class="bar"><i style="width:${pct}%"></i></div><p>${next}</p></div>`;
-  }).join("") : `<p class="muted">No compiled courses under this root yet. Run /byox-mode with a source.</p>`);
+  const active = courses.filter((c) => c.current);
+  const pick = active.find((c) => c.slug === lastCourse()) || active[0];
+  const hero = pick
+    ? `<section class="continue"><span class="node" aria-hidden="true"></span>
+        <div><p class="eyebrow">Continue</p><h2>${esc(pick.current.title)}</h2><p class="muted">${esc(pick.title)} · ${pick.progress.done} of ${pick.progress.total} steps</p></div>
+        <a href="#/c/${enc(pick.slug)}/${enc(pick.current.id)}"><button class="primary">Continue lesson</button></a></section>`
+    : "";
+  const cards = courses.map((c) => {
+    const next = c.current ? `<a href="#/c/${enc(c.slug)}/${enc(c.current.id)}">Next: ${esc(c.current.title)}</a>` : `<span class="muted">Every lesson is done.</span>`;
+    return `<article class="course-card"><h3><a href="#/c/${enc(c.slug)}">${esc(c.title)}</a></h3>
+      ${ticks(c.progress.done, c.progress.total)}<p class="muted">${c.progress.done} of ${c.progress.total} steps</p><p class="where">${next}</p></article>`;
+  }).join("");
+  const add = `<article class="add-card"><h3>Add a course</h3>
+      <p class="muted">Give Claude Code a source and say what you want to build it in.</p>
+      <code>/byox-mode this transcript ~/Downloads/course.txt, Rails 8</code>
+      <div class="row"><button data-copy="/byox-mode this transcript ~/Downloads/course.txt, Rails 8">Copy command</button></div></article>`;
+  app.innerHTML = `<h1>Your workbench</h1><p class="muted">Each course is a list of lessons. Each lesson is steps you build and verify.</p>${hero}<div class="shelf">${cards}${add}</div>`;
+  app.onclick = (ev) => {
+    const b = ev.target.closest("[data-copy]");
+    if (!b) return;
+    navigator.clipboard?.writeText(b.dataset.copy);
+    b.textContent = "Copied";
+  };
 }
 
 async function courseMap(slug) {
   const c = await api(`/api/courses/${enc(slug)}`);
+  rememberCourse(slug);
   crumbs.textContent = c.title;
-  app.innerHTML = `<h1>${esc(c.title)}</h1><p class="muted">${c.progress.done} of ${c.progress.total} steps</p>
-    <ol class="map">${c.lessons.map((l) => {
-      const dots = `<span class="dots">${l.steps.map((s) => `<i class="${s.status}" title="${esc(s.id)} ${esc(s.title)}"></i>`).join("")}</span>`;
-      const title = l.status === "locked" ? `<span class="muted">${esc(l.title)}</span>` : `<a href="#/c/${enc(slug)}/${enc(l.id)}">${esc(l.title)}</a>`;
-      return `<li>${title} <span class="badge ${l.status}">${l.status}</span>${l.track === "ops" ? ` <span class="badge">ops</span>` : ""}${dots}</li>`;
-    }).join("")}</ol>`;
+  const lessons = c.lessons.map((l) => {
+    const title = l.status === "locked" || l.status === "building" ? esc(l.title) : `<a href="#/c/${enc(slug)}/${enc(l.id)}">${esc(l.title)}</a>`;
+    const node = l.status === "green" ? "&#10003;" : "";
+    const steps = l.steps.map((s) => `<li class="${s.status}"><span class="dot"></span><code>${esc(s.id)}</code><span>${esc(s.title)}</span></li>`).join("");
+    return `<article class="lesson ${l.status}"><span class="node" aria-hidden="true">${node}</span>
+      <h3>${title} <span class="badge ${l.status}">${STATUS_LABEL[l.status] || l.status}</span>${l.track === "ops" ? ` <span class="badge">ops</span>` : ""}</h3>
+      <ol class="steps">${steps}</ol></article>`;
+  }).join("");
+  app.innerHTML = `<p class="eyebrow">Course</p><h1>${esc(c.title)}</h1>
+    <p class="muted">${c.progress.done} of ${c.progress.total} steps. Every step is a commit in the mentor's solution.</p>
+    <div class="map">${lessons}</div>
+    <section class="add-lessons"><h3>Add lessons</h3>
+      <p class="muted">Ask the agent for more: the next chapters of your source, a new source, or a feature. It writes each lesson, reviews it, and releases it in order. This course stays usable while it works.</p>
+      <textarea id="add-request" rows="3" placeholder="Add the next five lectures of ~/Downloads/part-2.txt"></textarea>
+      <div class="row"><button class="primary" id="add-go">Ask the agent</button></div>
+      <pre class="output" id="add-out" hidden></pre></section>`;
+  document.getElementById("add-go").onclick = async (ev) => {
+    const box = document.getElementById("add-request");
+    const out = document.getElementById("add-out");
+    if (!box.value.trim()) return box.focus();
+    ev.target.disabled = true;
+    out.hidden = false;
+    out.textContent = "Working. This can take a few minutes per lesson.\n";
+    try {
+      const res = await stream(`/api/courses/${enc(slug)}/add-lessons`, { request: box.value }, (t) => { out.textContent += t; out.scrollTop = out.scrollHeight; });
+      out.textContent += res?.exit === 0 ? "\nDone. Reload the map to see the new lessons.\n" : "\nThe agent stopped. Read the output above.\n";
+    } catch (e) {
+      out.textContent += `\n${e.message}\n`;
+    } finally {
+      ev.target.disabled = false;
+    }
+  };
 }
 
 function unclearButton(section) {
   return `<button class="link" data-unclear="${esc(section)}" title="This section is unclear">Unclear?</button>`;
 }
 
+function designHtml(s) {
+  if (!s.design && !s.design_phone && !s.diff && !s.design_source) return "";
+  const fig = (url, cap, cls = "") => (url ? `<figure class="${cls}"><img src="${esc(url)}?t=${s.attempts}" alt="${esc(cap)}" loading="lazy"><figcaption>${esc(cap)}</figcaption></figure>` : "");
+  const source = s.design_source ? `<p class="muted">Open <code>${esc(s.design_source)}</code> in your browser and use Inspect, like a design file.</p>` : "";
+  const diff = s.diff && s.status !== "green" ? fig(s.diff, "Where your page differs, in red", "differs") : "";
+  return `<div class="design">${fig(s.design, "Design, desktop 1280x800")}${fig(s.design_phone, "Design, phone 390x844")}${diff}</div>${source}`;
+}
+
 function stepHtml(s) {
-  if (s.status === "locked") return `<div class="card step locked"><h3>${esc(s.id)} ${esc(s.title)}</h3><p>Locked. Finish the step before it.</p></div>`;
+  if (s.status === "locked") return `<div class="step locked" id="step-${esc(s.id)}"><h3><code>${esc(s.id)}</code> ${esc(s.title)}</h3><p>Locked. Finish the step before it.</p></div>`;
   const hints = s.hints.map((h, i) => `<div class="hint"><strong>Hint ${i + 1}.</strong> ${md(h)}</div>`).join("");
   const more = s.hints.length < s.hints_total ? `<button data-hint="${esc(s.id)}" data-n="${s.hints.length + 1}">Hint ${s.hints.length + 1} of ${s.hints_total}</button>` : "";
   const gens = s.generators.length ? `<p><strong>Run these generators.</strong> Their output is not code you type.</p><pre>${esc(s.generators.join("\n"))}</pre>` : "";
   const explain = s.last_exit && s.status !== "green" ? `<button data-explain="${esc(s.id)}">Explain failure</button>` : "";
-  return `<div class="card step ${s.status}" id="step-${esc(s.id)}">
-    <div class="row"><h3>${s.status === "green" ? `<span class="check">&#10003;</span> ` : ""}${esc(s.id)} ${esc(s.title)}</h3>${unclearButton(`step ${s.id}`)}</div>
+  return `<div class="step ${s.status}" id="step-${esc(s.id)}">
+    <div class="row"><h3>${s.status === "green" ? `<span class="check">&#10003;</span>` : ""}<code>${esc(s.id)}</code> ${esc(s.title)}</h3><span class="spacer"></span>${unclearButton(`step ${s.id}`)}</div>
     <p class="muted"><code>${esc(s.verify)}</code></p>
-    ${md(s.instructions)}${gens}
+    ${md(s.instructions)}${gens}${designHtml(s)}
     ${s.gotchas ? `<p><strong>Gotchas.</strong></p>${md(s.gotchas)}` : ""}
     ${hints}
     <div class="row"><button class="primary" data-verify="${esc(s.id)}">Verify</button>${more}${explain}</div>
@@ -116,8 +178,10 @@ async function lesson(slug, id) {
        <button data-bad="${esc(r.url)}">Bad resource</button>${backup ? ` <span class="muted">Backup: <a href="${esc(backup.url)}" target="_blank" rel="noopener">${esc(backup.section)}</a></span>` : ""}`
     : `<p class="muted">Every resource for this lesson is on your blocklist. Press This lesson is broken to get a new one.</p>`;
   const concepts = l.concepts.map((c) => c.exists ? `<li><a href="#/concept/${enc(c.slug)}">${esc(c.slug)}</a></li>` : `<li class="muted">${esc(c.slug)} (missing)</li>`).join("");
-  app.innerHTML = `
-    <div class="row"><span class="badge ${l.status}">${esc(l.status)}</span>${l.track === "ops" ? `<span class="badge">ops</span>` : ""}</div>
+  rememberCourse(slug);
+  const rail = l.steps.map((s) => `<li class="${s.status}"><button data-jump="${esc(s.id)}"><code>${esc(s.id)}</code>${esc(s.title)}</button></li>`).join("");
+  app.innerHTML = `<div class="lesson-page"><aside class="steprail" aria-label="Steps in this lesson"><p class="eyebrow">Steps</p><ol>${rail}</ol></aside><div class="content">
+    <div class="row"><span class="badge ${l.status}">${esc(STATUS_LABEL[l.status] || l.status)}</span>${l.track === "ops" ? `<span class="badge">ops</span>` : ""}</div>
     <h1>${esc(l.title)}</h1>
     <h2>Goal</h2><div class="goal">${md(l.goal)}</div>
     <h2>Short read ${unclearButton("short_read")}</h2>${md(l.sections.short_read)}
@@ -136,7 +200,7 @@ async function lesson(slug, id) {
       <button data-broken>This lesson is broken</button>
       ${l.next_lesson && (l.status === "green" || l.status === "skipped") ? `<a href="#/c/${enc(slug)}/${enc(l.next_lesson)}"><button class="primary">Next lesson</button></a>` : ""}
     </div>
-    <pre class="output" id="job" hidden></pre>`;
+    <pre class="output" id="job" hidden></pre></div></div>`;
 
   const job = document.getElementById("job");
   const runJob = async (path, body) => {
@@ -155,7 +219,9 @@ async function lesson(slug, id) {
     const b = ev.target.closest("button");
     if (!b) return;
     const d = b.dataset;
-    if (d.verify) {
+    if (d.jump) {
+      document.getElementById(`step-${d.jump}`)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    } else if (d.verify) {
       const out = document.getElementById(`out-${d.verify}`);
       out.hidden = false;
       out.className = "output";
@@ -215,6 +281,11 @@ function celebrate(slug, l) {
   };
 }
 
+function isDark() {
+  const t = document.documentElement.dataset.theme;
+  return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
 let mermaidLoad;
 function renderMermaid(root) {
   const blocks = root.querySelectorAll("code.language-mermaid");
@@ -233,7 +304,7 @@ function renderMermaid(root) {
     document.head.appendChild(s);
   });
   mermaidLoad.then(() => {
-    mermaid.initialize({ startOnLoad: false, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" });
+    mermaid.initialize({ startOnLoad: false, theme: isDark() ? "dark" : "default" });
     mermaid.run({ nodes: root.querySelectorAll("pre.mermaid") });
   }).catch(() => {});
 }
@@ -328,3 +399,16 @@ fb.onclick = async (ev) => {
     out.textContent += `${e.message}\n`;
   }
 };
+
+const themeBtn = document.getElementById("theme");
+const showTheme = () => { themeBtn.textContent = `Theme: ${document.documentElement.dataset.theme || "auto"}`; };
+themeBtn.onclick = () => {
+  const order = ["auto", "light", "dark"];
+  const next = order[(order.indexOf(document.documentElement.dataset.theme || "auto") + 1) % order.length];
+  if (next === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = next;
+  try { next === "auto" ? localStorage.removeItem("byox.theme") : localStorage.setItem("byox.theme", next); } catch { /* private window */ }
+  showTheme();
+  route();
+};
+showTheme();
