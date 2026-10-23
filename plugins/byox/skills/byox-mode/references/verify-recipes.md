@@ -1,12 +1,12 @@
 # Verify recipes
 
-Every step's `verify` field names one shell command, usually `sh course/verify/<step>.sh`. It runs from the course dir, in the learner's repo or in a temp export of a solution tag during `byox strength`. Exit code 0 is green.
+Every step's `verify` field names one shell command, usually `sh "$BYOX_COURSE/verify/<step>.sh"`. It runs from the learner's `work/` folder, in the learner's repo or in a temp export of a solution tag during `byox strength`. Exit code 0 is green.
 
 ## Rules for every recipe
 
 - **Idempotent.** Running it twice gives the same result. Install only when missing (`bundle check || bundle install`). Reset the test database (`bin/rails db:test:prepare`).
 - **Fast.** A verify should finish in seconds. Run only the step's own tests.
-- **Visible.** All tests live in `course/tests/<step>/`. There are no hidden tests.
+- **Visible.** All tests live in `$BYOX_COURSE/tests/<step>/`. There are no hidden tests.
 - **Random values.** Anything a learner could hardcode comes from `SecureRandom`, `rand`, Faker or `$RANDOM`. Lint fails a test dir with no random source.
 - **Strong.** The tests must fail on the solution at the previous tag and pass at this step's tag. `byox strength` checks it. Only `kind: cloud` steps are exempt.
 - **Readable failure.** The first failing line says what was expected and what came back.
@@ -15,7 +15,7 @@ Every step's `verify` field names one shell command, usually `sh course/verify/<
 
 | kind | Recipe |
 |---|---|
-| `backend` | Request or model tests in the course's framework. Rails with RSpec: `bundle exec rspec course/tests/<step>`. Add a support file under `course/support/` for shared helpers such as Devise sign in. |
+| `backend` | Request or model tests in the course's framework. Rails with RSpec: `bundle exec rspec "$BYOX_COURSE/tests/<step>"`. Add a support file under `course/support/` for shared helpers such as Devise sign in. |
 | `cli` | Feed input on stdin and compare stdout, or run a client script against the learner's server. Keep `N.in` and `N.out` files in the test dir when the output is fixed, and generate input in the test when it must be random. |
 | `ui` | Browser tests that click, fill and read the page. Rails system tests or Playwright. Assert on visible text and roles, not CSS classes. |
 | `visual` | The learner builds a page from a design. `references/frontend-design.md` says where the design comes from and how it is handed over. Verify starts the learner's app, screenshots it, and pixel-diffs it against `course/tests/<step>/target.png`, and against `target-phone.png` when there is one. Start from `templates/verify-visual.sh`. For a design made in Penpot set `COARSE=8`, because Penpot and Chrome draw text differently. The site shows the target next to the step and the red diff after a failed verify. |
@@ -40,7 +40,7 @@ Keep a cloud step small enough that its check is one or two CLI calls. Say in th
 set -e
 bundle check >/dev/null 2>&1 || bundle install --quiet
 bin/rails db:test:prepare >/dev/null
-exec bundle exec rspec course/tests/03.2 --require ./course/support/devise_helpers.rb
+exec bundle exec rspec "$BYOX_COURSE/tests/03.2" --require "$BYOX_COURSE/support/devise_helpers.rb"
 ```
 
 ## Example: stdin and stdout
@@ -48,7 +48,7 @@ exec bundle exec rspec course/tests/03.2 --require ./course/support/devise_helpe
 ```sh
 #!/bin/sh
 set -e
-exec ruby course/tests/01.2/echo_test.rb
+exec ruby "$BYOX_COURSE/tests/01.2/echo_test.rb"
 ```
 
 The test runs `ruby main.rb` with a random word on stdin and compares the reply.
@@ -57,4 +57,4 @@ The test runs `ruby main.rb` with a random word on stdin and compares the reply.
 
 - Call the interpreter explicitly: `ruby bin/rails test ...`, never `bin/rails test ...`. Some drives, such as NTFS, drop the executable bit, and the strength check runs exported copies.
 - Exit with a sentence the learner can act on when the app is not there yet, such as "There is no bin/rails in this folder yet. Generate the app here first (step 01.1)."
-- Run only the step's own tests, with a path into `course/tests/<step>`. The generated tests in the app's `test/` folder are not the learner's checks.
+- Run only the step's own tests, with a path into `$BYOX_COURSE/tests/<step>`. The generated tests in the app's `test/` folder are not the learner's checks.

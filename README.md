@@ -70,7 +70,7 @@ This opens the site at http://127.0.0.1:4917. The loop:
 
 1. Read the lesson.
 2. Write the code in your own editor.
-3. Press **Verify**. Green unlocks the next step.
+3. Press **Verify**. Green unlocks the next step. Your code goes in the project's `work/` folder.
 4. Stuck? Reveal a hint, or press **Explain failure**.
 5. A green lesson unlocks the mentor's solution and a diff against your code.
 
@@ -101,6 +101,18 @@ After you have worked through some lessons, or after a compile that went badly, 
 
 - **Frontend.** With Penpot connected (a free account, an MCP key, and the file open in a browser tab), the agent builds each step as a Penpot file with named tokens and links it from the lesson. Otherwise each step ships `course/design/<step>/design.html`, a self-contained design with its colors, type and spacing in CSS variables. The lesson shows the desktop and phone targets either way. Verify starts your app, takes screenshots with headless Chrome and compares them, and prints the percentage of pixels that differ. `byox shot` and `byox visual-diff` are the two tools behind it. Penpot draws text differently from Chrome, so those steps compare 8px block averages (`--coarse 8`) and still catch wrong colors and layout.
 - **Cloud and DevOps.** Each step ships a bash script that runs the real CLI and checks its output. The AWS CLI reads `AWS_ENDPOINT_URL`, so the same script works against a free local emulator such as [Floci](https://github.com/floci-io/floci), which needs no account, and against real AWS.
+
+## Where things live
+
+A project is a folder with two folders in it:
+
+```
+~/byox-courses/corsego/
+  course/   the agent's lessons, tests, solution and your progress
+  work/     your own project, with its own git repo
+```
+
+`work/` holds only your code, so you can search and edit it freely without course files in the way. `course/` is the agent's, and you never need to open it. Courses made with an older version keep your app in the project folder itself, and byox still runs them.
 
 ## Configuration
 

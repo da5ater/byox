@@ -46,7 +46,7 @@ Every course file follows `references/course-format.md`. The parser in `scripts/
 Paths:
 
 - Courses root: `byox.yml` sits here. The `--root` flag, else `BYOX_ROOT`, else `~/byox-courses`.
-- A course: `<root>/<slug>/`. It is the learner's app and their own git repo. Course files live in `<root>/<slug>/course/`.
+- A project: `<root>/<project>/`, a folder with two folders. `course/` is the agent's work. `work/` is the learner's own code, with its own git repo, free to search. Courses made earlier keep the app in the project folder itself.
 - The vault: `vault:` in `byox.yml`, such as a folder in an Obsidian vault. Default `<root>/vault`. See `references/obsidian-layout.md`.
 
 ## Agent budget

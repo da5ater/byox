@@ -2,7 +2,7 @@
 
 Intake only. It ends with a draft `course.md` and hands off to `compile.md`. The repo's history is the code truth. There is no narration, so you write it from the diffs, the PR text and articles.
 
-1. **Make the course dir.** Create `<root>/<slug>/course/source/` and run `git init` in `<root>/<slug>`. Clone the repo to `course/source/upstream`.
+1. **Make the project.** Create `<root>/<slug>/course/source/` and nothing else. Clone the repo to `course/source/upstream`.
 2. **Read the history.** `git -C course/source/upstream log --reverse --format='%h %ad %s' --date=short --shortstat`. Read the README, the first release notes and the tags.
 3. **Propose a cutoff.** Pick the commit where the core works, such as a first release tag (`v0.5.0` for Sidekiq). Everything after it is out of scope unless the user asks. Put it in `source.cutoff`.
 4. **Group commits.** Group consecutive commits into steps by what they build. Fold noise commits ("Misc", "oops", formatting) into the step they belong to. Group steps into lessons, one feature each.

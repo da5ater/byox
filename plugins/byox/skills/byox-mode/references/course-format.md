@@ -4,9 +4,11 @@ The contract every course file follows. `scripts/lib/byox/format.rb` is its only
 
 ## Folder
 
+A project is a folder with two folders in it and nothing else.
+
 ```
-<root>/<slug>/                 the learner's app, their own git repo
-  course/
+<root>/<project>/
+  course/                      the agent's work. The learner never edits it.
     course.md                  outline, stack, services, concepts, coverage, dropped
     lessons/NN-slug.md         one file per lesson
     tests/<step>/              the step's tests, any framework
@@ -16,7 +18,12 @@ The contract every course file follows. `scripts/lib/byox/format.rb` is its only
     state.json                 written by the site only
     .cache/                    verify logs, written by the site
     .gitignore                 solution/, state.json, .cache/
+  work/                        the learner's own project, with its own git repo. They search it freely.
 ```
+
+`course.md` says `layout: split`. Every step's `verify` runs from `work/`, and scripts reach the course folder through `$BYOX_COURSE`, which byox sets. Never write a relative `course/` path in a script or a `verify` command of a split course.
+
+A course made before this layout has no `layout` line, which means `inline`. There the learner's app is the project folder itself, `course/` sits inside it, and `verify` runs from the project folder. byox still runs those courses. New courses are always split.
 
 ## Ids
 
@@ -30,6 +37,7 @@ The contract every course file follows. `scripts/lib/byox/format.rb` is its only
 ---
 byox: 1
 title: Corsego, an online course marketplace
+layout: split
 status: draft                     # draft, then approved, then compiled. The site lists only compiled courses.
 source:
   kind: transcript+repo           # transcript+repo | transcript | article | repo
@@ -95,7 +103,7 @@ steps:
   - id: "03.2"
     title: Every page needs a logged-in user
     kind: backend                 # backend | cli | ui | visual | cloud | perf | stub
-    verify: sh course/verify/03.2.sh
+    verify: sh "$BYOX_COURSE/verify/03.2.sh"
     generators: []                # commands the learner runs, never types the output of
     generated: []                 # globs of files the generators write
     instructions: |
@@ -126,7 +134,7 @@ The precise spec, as a short list.
 
 - `goal` is two lines. It is shown on the course map.
 - Every step has `id`, `title`, `kind`, `verify`, `instructions` and exactly three `hints`. The parser rejects anything else, so the site never sees a step with two hints.
-- `verify` is one shell command run from the course dir. The site runs it and goes green on exit code 0. The learner could type it themselves.
+- `verify` is one shell command run from the learner's `work/` folder. The site runs it and goes green on exit code 0. The learner could type it themselves.
 - `generators` lists commands like `bin/rails generate devise:install`. `generated` lists globs of the files they write, such as `db/migrate/*_devise_create_users.rb` or `test/**`. The solution view collapses those files, and the leak check ignores them.
 - Do not write gotchas. They did not help the learner. A course compiled earlier keeps its `gotchas` field, and the site still shows it.
 - `design_url` is optional. On a `visual` step, an https link to the design, such as a Penpot view link. The lesson page shows it as a button.

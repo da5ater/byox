@@ -40,9 +40,9 @@ The fallback is a hand-off the learner can also inspect, with no account.
    B shot file://$PWD/course/design/<step>/design.html course/tests/<step>/target.png --size 1280x800
    B shot file://$PWD/course/design/<step>/design.html course/tests/<step>/target-phone.png --size 390x844
    ```
-   `B` is the path of `scripts/byox`. Skip the phone shot only when the step is desktop only.
+   Run these from the project folder. `B` is the path of `scripts/byox`. Skip the phone shot only when the step is desktop only.
 3. Write the spec into the lesson's Task section, from the variables in the file: the colors with hex values, the type sizes, the spacing scale, the breakpoint, and what each state looks like. A learner should never need to guess a number.
-4. Tell the learner where the design lives, in the step's instructions: "Open `course/design/<step>/design.html` in your browser and use Inspect, like a design file." The site also shows the two target images in the step.
+4. Tell the learner where the design lives, in the step's instructions: "Open `course/design/<step>/design.html` in the project folder in your browser and use Inspect, like a design file." The site also shows the two target images in the step.
 5. Build the solution from the design, not the other way round. The solution's page must match the target within the tolerance, and `byox strength` checks that the previous tag does not.
 
 A design is good when a stranger could build it from the images and the spec alone. Do not leave out a state to make the solution easier.

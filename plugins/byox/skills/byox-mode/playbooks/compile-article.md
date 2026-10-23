@@ -2,7 +2,7 @@
 
 Intake only. It ends with a draft `course.md` and hands off to `compile.md`. Build Your Own X articles are the typical source.
 
-1. **Make the course dir.** Create `<root>/<slug>/course/source/` and run `git init` in `<root>/<slug>`.
+1. **Make the project.** Create `<root>/<slug>/course/source/` and nothing else. `byox new` makes `work/` later.
 2. **Save the article.** Save it as Markdown to `course/source/article.md`. Keep its headings and every code listing.
 3. **Find the code.** If the article links a repo, clone it to `course/source/upstream` and treat it as code truth, the same as `compile-repo.md`. Otherwise the article's listings are the code truth.
 4. **Group into lessons.** Each heading that builds something is a lesson candidate. Each code listing is a step candidate. Merge listings that make sense only together.

@@ -20,7 +20,7 @@ Paths only.
 
 ## 1. Build it as a learner
 
-1. Export the tag before the lesson's first step into a scratch dir: `git -C <course>/course/solution archive <tag> | tar -x -C <scratch>`. Symlink `<course>/course` into it as `course`.
+1. Export the tag before the lesson's first step into a scratch dir: `git -C <course>/course/solution archive <tag> | tar -x -C <scratch>`. Use it as the learner's `work/` folder and run each step's verify there with `BYOX_COURSE=<course>/course`. For an inline course, symlink `<course>/course` into it as `course` too.
 2. For each step in order, read only the lesson page: Short read, Task and the step's instructions. Write the code in the scratch dir yourself.
 3. Run the step's verify from the scratch dir. If it fails, read hint 1, try again, then hint 2, then hint 3. Record which hint you needed.
 4. Do not open `course/solution`, `course/source/diffs` or the writer's report until every step is green or you are stuck after hint 3.
