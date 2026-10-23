@@ -20,7 +20,7 @@ module Byox
 
   Resource = Data.define(:url, :section, :why)
 
-  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values) do
+  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values, :design_url) do
     def tag = "step-#{id}"
     def tests_dir = "course/tests/#{id}"
   end
@@ -131,12 +131,14 @@ module Byox
       %w[title verify].each { |f| problems << [:front_matter, "#{where}: #{f} is empty"] if raw[f].to_s.strip.empty? }
       problems << [:front_matter, "#{where}: kind must be one of #{KINDS.join(', ')}"] unless KINDS.include?(raw["kind"].to_s)
       problems << [:sections_present, "#{where}: instructions are empty"] if raw["instructions"].to_s.strip.empty?
+      design_url = raw["design_url"].to_s.strip
+      problems << [:front_matter, "#{where}: design_url must be an https link"] unless design_url.empty? || design_url.match?(%r{\Ahttps://\S+\z})
       hints = Array(raw["hints"]).map(&:to_s)
       problems << [:three_hints, "#{where}: has #{hints.size} hints, needs 3"] unless hints.size == 3 && hints.none? { _1.strip.empty? }
       Step.new(id:, title: raw["title"].to_s, kind: raw["kind"].to_s, verify: raw["verify"].to_s,
                generators: Array(raw["generators"]).map(&:to_s), generated: Array(raw["generated"]).map(&:to_s),
                instructions: raw["instructions"].to_s, gotchas: raw["gotchas"].to_s, hints:,
-               fixed_values: raw["fixed_values"].to_s.strip)
+               fixed_values: raw["fixed_values"].to_s.strip, design_url: (design_url.empty? ? nil : design_url))
     end
 
     def generated?(path, globs)

@@ -162,6 +162,7 @@ module Byox
           "attempts" => state.dig("steps", s.id, "attempts") || 0, "last_exit" => state.dig("steps", s.id, "last_exit"),
           "hints" => s.hints.first(revealed), "hints_total" => s.hints.size, "tests" => tests,
           "design" => (s.kind == "visual" ? image_url(c, "course/tests/#{s.id}/target.png") : nil),
+          "design_url" => s.design_url,
           "design_phone" => (s.kind == "visual" ? image_url(c, "course/tests/#{s.id}/target-phone.png") : nil),
           "design_source" => (s.kind == "visual" && File.file?(File.join(c.dir, "course/design/#{s.id}/design.html")) ? "course/design/#{s.id}/design.html" : nil),
           "diff" => (s.kind == "visual" ? image_url(c, "course/.cache/diff-#{s.id}.png") : nil) }

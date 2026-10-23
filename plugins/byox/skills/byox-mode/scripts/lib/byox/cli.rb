@@ -15,7 +15,7 @@ module Byox
         byox tag      COURSE_DIR STEP_ID [--from REPO SHA] [--force]
         byox sync     [--root DIR]
         byox shot URL OUT.png [--size 1280x800] [--wait MS]
-        byox visual-diff TARGET.png ACTUAL.png [--tolerance 0.02] [--out DIFF.png]
+        byox visual-diff TARGET.png ACTUAL.png [--tolerance 0.02] [--coarse 8] [--out DIFF.png]
         byox feedback add TEXT [--page HASH] | list [--open] | mark ID... --pr URL   [--root DIR]
       Exit codes: 0 ok, 1 check failed, 2 bad input.
     TXT
@@ -42,6 +42,7 @@ module Byox
         o.on("--size WxH") { opts[:size] = _1 }
         o.on("--wait MS", Integer) { opts[:wait] = _1 }
         o.on("--tolerance F", Float) { opts[:tolerance] = _1 }
+        o.on("--coarse N", Integer) { opts[:coarse] = _1 }
         o.on("--out FILE") { opts[:out] = _1 }
         o.on("--open") { opts[:open] = true }
         o.on("--pr URL") { opts[:pr] = _1 }
@@ -202,8 +203,10 @@ module Byox
 
       [target, actual].each { raise ArgumentError, "no such file: #{_1}" unless File.file?(_1) }
       limit = opts[:tolerance] || 0.02
-      result = Visual.diff(target, actual, out: opts[:out])
-      puts format("%.2f%% of pixels differ (limit %.2f%%), %dx%d", result.ratio * 100, limit * 100, result.width, result.height)
+      result = Visual.diff(target, actual, out: opts[:out], block: opts[:coarse] || 1)
+      unit = result.block > 1 ? "blocks" : "pixels"
+      note = result.block > 1 ? ", compared in #{result.block}px blocks" : ""
+      puts format("%.2f%% of %s differ (limit %.2f%%), %dx%d%s", result.ratio * 100, unit, limit * 100, result.width, result.height, note)
       result.ratio <= limit ? 0 : 1
     rescue Visual::SizeMismatch => e
       puts e.message

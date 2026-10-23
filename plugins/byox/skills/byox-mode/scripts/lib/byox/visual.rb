@@ -9,7 +9,7 @@ module Byox
     # ignores anti-aliasing and font smoothing noise.
     CHANNEL_DELTA = 16
 
-    Result = Data.define(:ratio, :differing, :total, :width, :height)
+    Result = Data.define(:ratio, :differing, :total, :width, :height, :block)
 
     module_function
 
@@ -30,26 +30,47 @@ module Byox
       end
     end
 
-    def diff(target_path, actual_path, out: nil)
+    # block 1 compares every pixel. A bigger block compares the average color of each
+    # block x block square instead, which ignores font smoothing and one pixel shifts but
+    # still catches a wrong color, a missing element or a layout that moved.
+    def diff(target_path, actual_path, out: nil, block: 1)
       target = Png.decode(File.binread(target_path))
       actual = Png.decode(File.binread(actual_path))
       sizes = [target, actual].map { "#{_1.first.size}x#{_1.size}" }
       raise SizeMismatch, "the page is #{sizes[1]} but the target is #{sizes[0]}" unless sizes.uniq.size == 1
 
+      height = target.size
+      width = target.first.size
+      block = [block.to_i, 1].max
       differing = 0
-      painted = target.each_with_index.map do |row, y|
-        row.each_with_index.map do |t, x|
-          if t.first(3).zip(actual[y][x].first(3)).any? { |a, b| (a - b).abs > CHANNEL_DELTA }
-            differing += 1
-            [255, 0, 0, 255]
-          else
-            [t[0] / 3 + 170, t[1] / 3 + 170, t[2] / 3 + 170, 255]
-          end
+      total = 0
+      flagged = Array.new(height) { Array.new(width, false) }
+      (0...height).step(block) do |y0|
+        (0...width).step(block) do |x0|
+          cells = (y0...[y0 + block, height].min).flat_map { |y| (x0...[x0 + block, width].min).map { |x| [y, x] } }
+          t = average(cells.map { |y, x| target[y][x] })
+          a = average(cells.map { |y, x| actual[y][x] })
+          total += 1
+          next unless t.zip(a).any? { |p, q| (p - q).abs > CHANNEL_DELTA }
+
+          differing += 1
+          cells.each { |y, x| flagged[y][x] = true }
         end
       end
-      File.binwrite(out, Png.encode(painted)) if out
-      total = target.size * target.first.size
-      Result.new(ratio: differing.to_f / total, differing:, total:, width: target.first.size, height: target.size)
+      write_diff(out, target, flagged) if out
+      Result.new(ratio: differing.to_f / total, differing:, total:, width:, height:, block:)
+    end
+
+    def average(pixels)
+      sums = pixels.each_with_object([0, 0, 0]) { |px, acc| 3.times { |i| acc[i] += px[i] } }
+      sums.map { _1 / pixels.size }
+    end
+
+    def write_diff(path, target, flagged)
+      painted = target.each_with_index.map do |row, y|
+        row.each_with_index.map { |t, x| flagged[y][x] ? [255, 0, 0, 255] : [t[0] / 3 + 170, t[1] / 3 + 170, t[2] / 3 + 170, 255] }
+      end
+      File.binwrite(path, Png.encode(painted))
     end
 
     class SizeMismatch < ArgumentError; end

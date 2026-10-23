@@ -60,6 +60,37 @@ class VisualTest < Minitest::Test
     assert_equal 0, byox("visual-diff", target, actual)[0]
   end
 
+  # Penpot and Chrome rasterize text differently, so a design exported from Penpot never
+  # matches a Chrome screenshot pixel for pixel. Coarse mode compares block averages.
+  def noisy(name)
+    pixels = Array.new(20) { |y| Array.new(40) { |x| (x % 8 == 3 && y % 8 == 3) ? [0, 0, 0, 255] : [255, 255, 255, 255] } }
+    path = File.join(@dir, name)
+    File.binwrite(path, Byox::Png.encode(pixels))
+    path
+  end
+
+  def test_coarse_mode_ignores_glyph_sized_noise_that_the_fine_compare_flags
+    target = png("t.png")
+    actual = noisy("a.png") # one black pixel in every 8x8 block
+    code, out = byox("visual-diff", target, actual, "--tolerance", "0.01")
+    assert_equal 1, code, "the fine compare sees the speckles: #{out}"
+    code, out = byox("visual-diff", target, actual, "--tolerance", "0.01", "--coarse", "8")
+    assert_equal 0, code, out
+    assert_match(/0\.00% of blocks differ \(limit 1\.00%\), 40x20, compared in 8px blocks/, out)
+  end
+
+  def test_coarse_mode_still_catches_a_real_layout_error
+    target = png("t.png")
+    actual = png("a.png", square: [0, 0, 10, [255, 0, 0, 255]])
+    out_path = File.join(@dir, "diff.png")
+    code, out = byox("visual-diff", target, actual, "--tolerance", "0.02", "--coarse", "8", "--out", out_path)
+    assert_equal 1, code
+    assert_match(/20\.00% of blocks differ/, out)
+    diff = Byox::Png.decode(File.binread(out_path))
+    assert_equal [255, 0, 0], diff[3][3][0, 3], "the flagged blocks are painted red at full size"
+    assert_equal [40, 20], [diff[0].size, diff.size]
+  end
+
   def test_different_sizes_fail_with_both_sizes_named
     code, out = byox("visual-diff", png("t.png", width: 40), png("a.png", width: 41))
     assert_equal 1, code
@@ -161,5 +192,29 @@ class VisualSiteTest < Minitest::Test
       learner_writes(s)
       sse(api("/steps/#{s}/verify"))
     end
+  end
+end
+
+class DesignLinkTest < Minitest::Test
+  include SiteHelpers
+
+  def setup = start_site
+  def teardown = stop_site
+
+  def add_field(line)
+    Fixture.edit_lesson(@root, "01-ping") { |t| t.sub(/(- id: ["']?01\.1["']?\n\s*title: [^\n]*\n)(\s*)kind: cli/) { "#{$1}#{$2}kind: visual\n#{$2}#{line}" } }
+  end
+
+  def test_a_step_can_link_to_its_design_in_penpot
+    add_field("design_url: https://design.penpot.app/#/view?file-id=abc&page-id=def")
+    _, body = json(:get, api("/lessons/01-ping"))
+    assert_equal "https://design.penpot.app/#/view?file-id=abc&page-id=def", body["steps"][0]["design_url"]
+    assert_nil body["steps"][1]["design_url"]
+  end
+
+  def test_a_design_link_must_be_https
+    add_field("design_url: javascript:alert(1)")
+    findings = Byox::Checks.lint(Fixture.course(@root), Fixture.config(@root), lesson: "01-ping", offline: true)
+    assert(findings.any? { _1.check == :front_matter && _1.message.include?("design_url must be an https link") }, findings.inspect)
   end
 end

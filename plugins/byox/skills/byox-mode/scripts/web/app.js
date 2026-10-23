@@ -136,11 +136,12 @@ function unclearButton(section) {
 }
 
 function designHtml(s) {
-  if (!s.design && !s.design_phone && !s.diff && !s.design_source) return "";
+  if (!s.design && !s.design_phone && !s.diff && !s.design_source && !s.design_url) return "";
   const fig = (url, cap, cls = "") => (url ? `<figure class="${cls}"><img src="${esc(url)}?t=${s.attempts}" alt="${esc(cap)}" loading="lazy"><figcaption>${esc(cap)}</figcaption></figure>` : "");
+  const penpot = s.design_url ? `<p><a href="${esc(s.design_url)}" target="_blank" rel="noopener"><button>Open the design in Penpot</button></a></p>` : "";
   const source = s.design_source ? `<p class="muted">Open <code>${esc(s.design_source)}</code> in your browser and use Inspect, like a design file.</p>` : "";
   const diff = s.diff && s.status !== "green" ? fig(s.diff, "Where your page differs, in red", "differs") : "";
-  return `<div class="design">${fig(s.design, "Design, desktop 1280x800")}${fig(s.design_phone, "Design, phone 390x844")}${diff}</div>${source}`;
+  return `<div class="design">${fig(s.design, "Design, desktop 1280x800")}${fig(s.design_phone, "Design, phone 390x844")}${diff}</div>${penpot}${source}`;
 }
 
 function stepHtml(s) {

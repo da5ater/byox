@@ -8,6 +8,9 @@ STEP="${BYOX_STEP:?run this through byox, which sets BYOX_STEP}"
 START_CMD="${START_CMD:-ruby bin/rails server -p 3777}"
 URL="${URL:-http://127.0.0.1:3777/}"
 TOLERANCE="${TOLERANCE:-0.03}"
+# A design exported from Penpot never matches Chrome pixel for pixel, because text is
+# rasterized differently. Set COARSE=8 to compare 8px block averages instead.
+COARSE="${COARSE:-1}"
 CACHE=course/.cache
 TESTS="course/tests/$STEP"
 mkdir -p "$CACHE"
@@ -30,12 +33,12 @@ done
 status=0
 "$BYOX_BIN" shot "$URL" "$CACHE/actual-$STEP.png" --size 1280x800
 echo "Desktop, 1280x800:"
-"$BYOX_BIN" visual-diff "$TESTS/target.png" "$CACHE/actual-$STEP.png" --tolerance "$TOLERANCE" --out "$CACHE/diff-$STEP.png" || status=1
+"$BYOX_BIN" visual-diff "$TESTS/target.png" "$CACHE/actual-$STEP.png" --tolerance "$TOLERANCE" --coarse "$COARSE" --out "$CACHE/diff-$STEP.png" || status=1
 
 if [ -f "$TESTS/target-phone.png" ]; then
   "$BYOX_BIN" shot "$URL" "$CACHE/actual-$STEP-phone.png" --size 390x844
   echo "Phone, 390x844:"
-  "$BYOX_BIN" visual-diff "$TESTS/target-phone.png" "$CACHE/actual-$STEP-phone.png" --tolerance "$TOLERANCE" --out "$CACHE/diff-$STEP-phone.png" || status=1
+  "$BYOX_BIN" visual-diff "$TESTS/target-phone.png" "$CACHE/actual-$STEP-phone.png" --tolerance "$TOLERANCE" --coarse "$COARSE" --out "$CACHE/diff-$STEP-phone.png" || status=1
 fi
 
 [ "$status" -eq 0 ] || echo "Red marks in $CACHE/diff-$STEP.png show where your page differs from the design."
