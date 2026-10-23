@@ -6,6 +6,7 @@ module Byox
   DEFAULT_ROOT = "~/byox-courses"
   DEFAULT_AGENT_CMD = "claude -p"
   UPSTREAM = "da5ater/byox"
+  BIN = File.expand_path("../../byox", __dir__)
 
   # byox.yml at the courses root. Read only, never written by byox.
   Config = Data.define(:root, :vault, :agent_cmd, :plugin_repo, :upstream) do

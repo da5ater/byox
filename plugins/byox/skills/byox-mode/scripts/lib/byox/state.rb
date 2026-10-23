@@ -53,6 +53,7 @@ module Byox
     def lesson(outline, state, id)
       i = outline.index { _1.id == id } or raise ArgumentError, "unknown lesson #{id}"
       l = outline[i]
+      return :building if l.building
       return :green if l.steps.all? { step_green?(state, _1.id) }
       return :skipped if state.dig("lessons", id, "skipped_at")
       return :open if i.zero?
@@ -63,7 +64,7 @@ module Byox
     # Steps unlock in order inside an open lesson.
     def step(outline, state, id)
       l = outline.find { |x| x.steps.any? { _1.id == id } } or raise ArgumentError, "unknown step #{id}"
-      return :locked if lesson(outline, state, l.id) == :locked
+      return :locked if %i[locked building].include?(lesson(outline, state, l.id))
       return :green if step_green?(state, id)
 
       i = l.steps.index { _1.id == id }

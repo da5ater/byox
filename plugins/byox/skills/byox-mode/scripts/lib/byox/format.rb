@@ -28,7 +28,7 @@ module Byox
   Lesson = Data.define(:id, :title, :track, :goal, :concepts, :resources, :steps, :sections, :path)
 
   OutlineStep = Data.define(:id, :title)
-  OutlineLesson = Data.define(:id, :title, :track, :steps)
+  OutlineLesson = Data.define(:id, :title, :track, :steps, :building)
 
   Concept = Data.define(:slug, :title, :body, :path)
 
@@ -53,7 +53,7 @@ module Byox
       meta, = Format.split_front_matter(path)
       outline = Array(meta["lessons"]).map do |l|
         steps = Array(l["steps"]).map { |s| OutlineStep.new(id: s["id"].to_s, title: s["title"].to_s) }
-        OutlineLesson.new(id: l["id"].to_s, title: l["title"].to_s, track: (l["track"] || "core").to_s, steps:)
+        OutlineLesson.new(id: l["id"].to_s, title: l["title"].to_s, track: (l["track"] || "core").to_s, steps:, building: l["building"] == true)
       end
       new(slug: File.basename(dir), title: meta["title"].to_s, status: meta["status"].to_s,
           dir: File.expand_path(dir), meta:, outline:)

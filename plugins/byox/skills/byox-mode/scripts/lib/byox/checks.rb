@@ -137,7 +137,12 @@ module Byox
       end
     end
 
-    def test_files(course, step) = Dir[File.join(course.dir, step.tests_dir, "**", "*")].select { File.file?(_1) }
+    BINARY = %w[.png .jpg .jpeg .webp .gif .ico].freeze
+
+    # Test code only. A visual step keeps its target image here, which is not code.
+    def test_files(course, step)
+      Dir[File.join(course.dir, step.tests_dir, "**", "*")].select { File.file?(_1) && !BINARY.include?(File.extname(_1).downcase) }
+    end
 
     # Each step's verify must fail on the solution at the previous tag and pass at its own
     # tag. Both trees are exported to temp dirs with `course/` symlinked in, so the
@@ -155,7 +160,7 @@ module Byox
         Dir.mktmpdir("byox-strength-") do |tmp|
           Solution.export(course, tag, tmp)
           File.symlink(course.course_dir, File.join(tmp, "course"))
-          Shell.capture(step.verify, cwd: tmp, timeout: 300).first
+          Shell.capture(step.verify, cwd: tmp, env: { "BYOX_STEP" => step.id, "BYOX_BIN" => BIN }, timeout: 300).first
         end
       end
       verdict = if this_exit != 0 then "broken"

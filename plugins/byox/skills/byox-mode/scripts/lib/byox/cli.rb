@@ -14,6 +14,8 @@ module Byox
         byox match    LECTURES_DIR REPO [--until REF]
         byox tag      COURSE_DIR STEP_ID [--from REPO SHA] [--force]
         byox sync     [--root DIR]
+        byox shot URL OUT.png [--size 1280x800] [--wait MS]
+        byox visual-diff TARGET.png ACTUAL.png [--tolerance 0.02] [--out DIFF.png]
         byox feedback add TEXT [--page HASH] | list [--open] | mark ID... --pr URL   [--root DIR]
       Exit codes: 0 ok, 1 check failed, 2 bad input.
     TXT
@@ -24,7 +26,7 @@ module Byox
 
     def run(argv)
       cmd = argv.shift
-      return usage unless %w[site lint strength new split match tag sync feedback].include?(cmd)
+      return usage unless %w[site lint strength new split match tag sync feedback shot visual-diff].include?(cmd)
 
       opts = {}
       args = OptionParser.new do |o|
@@ -37,10 +39,14 @@ module Byox
         o.on("--from REPO") { opts[:from] = _1 }
         o.on("--force") { opts[:force] = true }
         o.on("--page HASH") { opts[:page] = _1 }
+        o.on("--size WxH") { opts[:size] = _1 }
+        o.on("--wait MS", Integer) { opts[:wait] = _1 }
+        o.on("--tolerance F", Float) { opts[:tolerance] = _1 }
+        o.on("--out FILE") { opts[:out] = _1 }
         o.on("--open") { opts[:open] = true }
         o.on("--pr URL") { opts[:pr] = _1 }
       end.parse(argv)
-      send("cmd_#{cmd}", args, opts)
+      send("cmd_#{cmd.tr("-", "_")}", args, opts)
     rescue OptionParser::ParseError, ArgumentError, FormatError => e
       warn e.message
       2
@@ -179,6 +185,29 @@ module Byox
         return usage
       end
       0
+    end
+
+    def cmd_shot(args, opts)
+      url, out = args
+      raise ArgumentError, "usage: byox shot URL OUT.png [--size 1280x800] [--wait MS]" unless url && out
+
+      width, height = (opts[:size] || "1280x800").split("x").map(&:to_i)
+      Visual.shot(url, out, width:, height:, wait_ms: opts[:wait] || 3000)
+      0
+    end
+
+    def cmd_visual_diff(args, opts)
+      target, actual = args
+      raise ArgumentError, "usage: byox visual-diff TARGET.png ACTUAL.png [--tolerance 0.02] [--out DIFF.png]" unless target && actual
+
+      [target, actual].each { raise ArgumentError, "no such file: #{_1}" unless File.file?(_1) }
+      limit = opts[:tolerance] || 0.02
+      result = Visual.diff(target, actual, out: opts[:out])
+      puts format("%.2f%% of pixels differ (limit %.2f%%), %dx%d", result.ratio * 100, limit * 100, result.width, result.height)
+      result.ratio <= limit ? 0 : 1
+    rescue Visual::SizeMismatch => e
+      puts e.message
+      1
     end
   end
 end

@@ -9,4 +9,4 @@ require "fileutils"
 require "tmpdir"
 require "shellwords"
 require "securerandom"
-%w[format config state feedback shell solution checks source agent_jobs http site cli].each { require_relative "byox/#{_1}" }
+%w[png visual format config state feedback shell solution checks source agent_jobs http site cli].each { require_relative "byox/#{_1}" }

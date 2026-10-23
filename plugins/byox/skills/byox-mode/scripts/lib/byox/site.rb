@@ -21,6 +21,7 @@ module Byox
       ["POST", "/api/courses/:course/lessons/:lesson/bad-resource", :bad_resource],
       ["GET",  "/api/concepts/:slug",                             :concept],
       ["POST", "/api/concepts/:slug/unclear",                     :unclear_concept], # SSE, agent
+      ["GET",  "/api/courses/:course/files/*path",                :course_file],
       ["GET",  "/api/feedback",                                   :feedback_list],
       ["POST", "/api/feedback",                                   :feedback_add],
       ["POST", "/api/feedback/ship",                              :feedback_ship],   # SSE, agent
@@ -91,6 +92,21 @@ module Byox
         Http::Response.new(200, MIME.fetch(File.extname(full), "application/octet-stream"), File.read(full))
       end
 
+      IMAGE_TYPES = { ".png" => "image/png", ".jpg" => "image/jpeg", ".jpeg" => "image/jpeg", ".webp" => "image/webp", ".svg" => "image/svg+xml" }.freeze
+      # Only design targets and the last diff leave the course folder. Never the solution or state.
+      SERVABLE = %r{\Acourse/(tests/[\w.-]+/target\.\w+|design/[\w./-]+|\.cache/diff-[\w.-]+\.png)\z}
+
+      def course_file(_req, course:, path:)
+        c = load_course(course)
+        rel = path.to_s
+        raise NotFound, rel unless rel.match?(SERVABLE) && !rel.include?("..") && IMAGE_TYPES.key?(File.extname(rel).downcase)
+
+        full = File.expand_path(rel, c.dir)
+        raise NotFound, rel unless full.start_with?("#{c.dir}/") && File.file?(full)
+
+        Http::Response.new(200, IMAGE_TYPES.fetch(File.extname(full).downcase), File.binread(full))
+      end
+
       def courses(_req)
         list = @config.course_dirs.filter_map do |dir|
           c = Course.load(dir)
@@ -119,7 +135,7 @@ module Byox
         l = load_lesson(c, lesson)
         state = State.load(c.state_path)
         status = Status.lesson(c.outline, state, l.id)
-        return Http.json(403, { "error" => "lesson is locked", "status" => status }) if status == :locked
+        return Http.json(403, { "error" => status == :building ? "this lesson is still being written" : "lesson is locked", "status" => status }) if %i[locked building].include?(status)
 
         Http.json(200, lesson_view(c, l, state, status))
       end
@@ -143,8 +159,12 @@ module Byox
         { "id" => s.id, "title" => s.title, "kind" => s.kind, "verify" => s.verify, "generators" => s.generators,
           "instructions" => s.instructions, "gotchas" => s.gotchas, "status" => Status.step(c.outline, state, s.id),
           "attempts" => state.dig("steps", s.id, "attempts") || 0, "last_exit" => state.dig("steps", s.id, "last_exit"),
-          "hints" => s.hints.first(revealed), "hints_total" => s.hints.size, "tests" => tests }
+          "hints" => s.hints.first(revealed), "hints_total" => s.hints.size, "tests" => tests,
+          "design" => (s.kind == "visual" ? image_url(c, "course/tests/#{s.id}/target.png") : nil),
+          "diff" => (s.kind == "visual" ? image_url(c, "course/.cache/diff-#{s.id}.png") : nil) }
       end
+
+      def image_url(c, rel) = File.file?(File.join(c.dir, rel)) ? "/api/courses/#{c.slug}/files/#{rel}" : nil
 
       def verify(_req, course:, step:)
         c, l, s = load_step(course, step)
@@ -160,7 +180,7 @@ module Byox
             FileUtils.mkdir_p(File.dirname(log_path))
             was_green = Status.lesson(c.outline, store.read, l.id) == :green
             code = File.open(log_path, "w") do |log|
-              Shell.stream(s.verify, cwd: c.dir, env: { "BYOX_STEP" => s.id }) do |line|
+              Shell.stream(s.verify, cwd: c.dir, env: { "BYOX_STEP" => s.id, "BYOX_BIN" => BIN }) do |line|
                 log.write(line)
                 emit.call("line", { "text" => line })
               end
