@@ -6,7 +6,8 @@ module Byox
   # commands and scripts are rewritten, so the tests keep passing. Test files are never
   # touched. A path inside one is reported for a person to look at.
   module Migrate
-    COURSE_PATH = %r{(?<![\w/.-])(?:\./)?course/(tests|verify|support|design|\.cache|source)/([^\s"']*)}
+    # course/..., ./course/... and ../course/... from a subfolder the script cd'd into.
+    COURSE_PATH = %r{(?<![\w/.-])(?:\.{1,2}/)*course/(tests|verify|support|design|\.cache|source)/([^\s"']*)}
     Plan = Data.define(:moves, :rewrites, :warnings)
 
     module_function
@@ -36,15 +37,18 @@ module Byox
     def rewrite_text(text) = text.lines.map { rewrite_line(_1) }.join
 
     # A path inside double quotes only needs the variable. A bare path gets quotes, so a
-    # project folder with a space in its name still works. A path in single quotes would
-    # not expand the variable, so it is left alone and reported.
+    # project folder with a space in its name still works, except that a wildcard must stay
+    # outside the quotes or it stops expanding. A path in single quotes would not expand the
+    # variable, so it is left alone and reported.
     def rewrite_line(line)
       line.gsub(COURSE_PATH) do
         m = Regexp.last_match
         before = m.pre_match
+        dir, rest = m[1], m[2]
         if before.count("'").odd? && before.count('"').even? then m[0]
-        elsif before.count('"').odd? then "$BYOX_COURSE/#{m[1]}/#{m[2]}"
-        else %("$BYOX_COURSE/#{m[1]}/#{m[2]}")
+        elsif before.count('"').odd? then "$BYOX_COURSE/#{dir}/#{rest}"
+        elsif rest.match?(/[*?\[]/) then %("$BYOX_COURSE"/#{dir}/#{rest})
+        else %("$BYOX_COURSE/#{dir}/#{rest}")
         end
       end
     end

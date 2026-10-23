@@ -80,6 +80,32 @@ class MigrateTest < Minitest::Test
     assert_equal %(exec ruby "$BYOX_COURSE/tests/01.1/ping_test.rb" "$BYOX_COURSE/support/x.rb"), line
   end
 
+  # Real verify scripts cd into a subfolder and reach the course with ../course/..., often
+  # with a wildcard. After the move ../course no longer exists, and a quoted wildcard does
+  # not expand, so both have to be handled.
+  def test_a_script_that_cds_into_a_subfolder_and_copies_tests_with_a_wildcard_still_passes
+    learner_has_written("01.1")
+    script = File.join(@project, "course/verify/01.1.sh")
+    File.write(script, <<~SH)
+      #!/bin/sh
+      cd lib || exit 1
+      rm -rf .course-tests && mkdir .course-tests
+      cp ../course/tests/01.1/*.rb .course-tests/ || exit 1
+      test -f .course-tests/ping_test.rb || exit 1
+      cat ../course/tests/01.1/ping_test.rb > /dev/null || exit 1
+    SH
+    _, status = Open3.capture2e({ "BYOX_COURSE" => File.join(@project, "course") }, "sh", script, chdir: @project)
+    assert status.success?, "the script works before the move"
+
+    assert_equal 0, byox("migrate", @project)[0]
+    text = File.read(script)
+    assert_includes text, %(cp "$BYOX_COURSE"/tests/01.1/*.rb .course-tests/), "a wildcard stays outside the quotes so it still expands"
+    assert_includes text, %(cat "$BYOX_COURSE/tests/01.1/ping_test.rb" > /dev/null)
+    assert_includes text, "rm -rf .course-tests && mkdir .course-tests", "a folder that only looks like course/ is left alone"
+    out, status = Open3.capture2e({ "BYOX_COURSE" => File.join(@project, "course") }, "sh", script, chdir: File.join(@project, "work"))
+    assert status.success?, "the script still works from work/: #{out}"
+  end
+
   def test_dry_run_changes_nothing_and_lists_the_plan
     learner_has_written("01.1")
     before = Dir.children(@project).sort
