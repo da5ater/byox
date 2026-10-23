@@ -1,7 +1,8 @@
 #!/bin/sh
 # Verify a frontend step. Starts the learner's app, screenshots it, and diffs the
 # screenshot against the design target. Copy it to course/verify/<step>.sh and change
-# START_CMD, URL and the paths the step needs. byox sets BYOX_BIN and BYOX_STEP.
+# START_CMD, URL and the paths the step needs. byox sets BYOX_BIN, BYOX_STEP and
+# BYOX_COURSE, the course folder, so the script works from the learner's work/ folder.
 set -e
 : "${BYOX_BIN:?run this through byox, which sets BYOX_BIN}"
 STEP="${BYOX_STEP:?run this through byox, which sets BYOX_STEP}"
@@ -11,8 +12,9 @@ TOLERANCE="${TOLERANCE:-0.03}"
 # A design exported from Penpot never matches Chrome pixel for pixel, because text is
 # rasterized differently. Set COARSE=8 to compare 8px block averages instead.
 COARSE="${COARSE:-1}"
-CACHE=course/.cache
-TESTS="course/tests/$STEP"
+COURSE="${BYOX_COURSE:-course}"
+CACHE="$COURSE/.cache"
+TESTS="$COURSE/tests/$STEP"
 mkdir -p "$CACHE"
 
 sh -c "exec $START_CMD" >"$CACHE/server-$STEP.log" 2>&1 &

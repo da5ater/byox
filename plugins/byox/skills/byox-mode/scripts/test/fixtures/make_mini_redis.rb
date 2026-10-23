@@ -365,7 +365,9 @@ module MiniRedis
 
   def git(dir, *args) = sh!("git", "-c", "user.name=byox", "-c", "user.email=byox@localhost", *args, chdir: dir)
 
-  def build(root, agent_cmd: "claude -p")
+  # layout :inline keeps the learner's app in the project folder next to course/. :split puts
+  # it in work/, so the project folder holds only course/ and work/.
+  def build(root, agent_cmd: "claude -p", layout: :inline)
     root = File.expand_path(root)
     vault = File.join(root, "vault")
     write(File.join(root, "byox.yml"), "vault: #{vault}\nagent_cmd: #{agent_cmd}\n")
@@ -375,12 +377,17 @@ module MiniRedis
 
     app = File.join(root, "mini-redis")
     c = File.join(app, "course")
-    write(File.join(c, "course.md"), COURSE_MD)
+    split = layout == :split
+    write(File.join(c, "course.md"), split ? COURSE_MD.sub("byox: 1", "byox: 1\nlayout: split") : COURSE_MD)
     write(File.join(c, ".gitignore"), "solution/\nstate.json\n.cache/\n")
-    LESSONS.each { |id, text| write(File.join(c, "lessons", "#{id}.md"), text) }
+    LESSONS.each do |id, text|
+      text = text.gsub(/verify: sh course\/verify\/([\d.]+)\.sh/, 'verify: sh "$BYOX_COURSE/verify/\1.sh"') if split
+      write(File.join(c, "lessons", "#{id}.md"), text)
+    end
     TESTS.each do |step, (name, text)|
       write(File.join(c, "tests", step, name), text)
-      write(File.join(c, "verify", "#{step}.sh"), "#!/bin/sh\nset -e\nexec ruby course/tests/#{step}/#{name}\n")
+      script = split ? %(exec ruby "$BYOX_COURSE/tests/#{step}/#{name}") : "exec ruby course/tests/#{step}/#{name}"
+      write(File.join(c, "verify", "#{step}.sh"), "#!/bin/sh\nset -e\n#{script}\n")
     end
 
     sol = File.join(c, "solution")
@@ -395,9 +402,16 @@ module MiniRedis
       git(sol, "tag", "step-#{step}")
     end
 
-    git(app, "init", "-q")
-    git(app, "add", "-A")
-    git(app, "commit", "-q", "-m", "Start mini-redis")
+    if split
+      work = File.join(app, "work")
+      FileUtils.mkdir_p(work)
+      git(work, "init", "-q")
+      git(work, "commit", "-q", "--allow-empty", "-m", "Start mini-redis")
+    else
+      git(app, "init", "-q")
+      git(app, "add", "-A")
+      git(app, "commit", "-q", "-m", "Start mini-redis")
+    end
     app
   end
 end

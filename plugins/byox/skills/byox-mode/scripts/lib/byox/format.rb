@@ -35,6 +35,11 @@ module Byox
 
   Course = Data.define(:slug, :title, :status, :dir, :meta, :outline) do
     def course_dir = File.join(dir, "course")
+
+    # "split": the project folder holds course/ for the agent and work/ for the learner.
+    # "inline" is the older layout, where the learner's app is the project folder itself.
+    def layout = meta["layout"] == "split" ? "split" : "inline"
+    def app_dir = layout == "split" ? File.join(dir, "work") : dir
     def lesson_path(id) = File.join(course_dir, "lessons", "#{id}.md")
     def solution_dir = File.join(course_dir, "solution")
     def state_path = File.join(course_dir, "state.json")

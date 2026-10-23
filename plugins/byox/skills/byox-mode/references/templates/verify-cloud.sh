@@ -3,7 +3,8 @@
 # it says. Copy it to course/verify/<step>.sh and replace the checks. Each check prints
 # a tick or a cross, and the first cross stops the script with a readable reason.
 # The AWS CLI reads AWS_ENDPOINT_URL, so the same script runs against real AWS or a
-# local emulator such as Floci (http://localhost:4566) with no change.
+# local emulator such as Floci (http://localhost:4566) with no change. It runs from the
+# learner's work/ folder. byox sets BYOX_COURSE to the course folder if a check needs it.
 set -u
 
 check() { # check "what should be true" command args...

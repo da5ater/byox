@@ -101,8 +101,9 @@ module Byox
       course = Course.load(dir)
       cdir = course.course_dir
       write_missing(File.join(cdir, ".gitignore"), "solution/\nstate.json\n.cache/\n")
+      init_work(course) if course.layout == "split"
       course.outline.each do |l|
-        write_missing(course.lesson_path(l.id), lesson_stub(l))
+        write_missing(course.lesson_path(l.id), lesson_stub(l, split: course.layout == "split"))
         l.steps.each do |s|
           FileUtils.mkdir_p(File.join(cdir, "tests", s.id))
           write_missing(File.join(cdir, "verify", "#{s.id}.sh"), "#!/bin/sh\necho '#{STUB}: verify for #{s.id}'\nexit 1\n")
@@ -120,12 +121,22 @@ module Byox
       File.write(path, text)
     end
 
-    def lesson_stub(l)
+    # The learner's own folder: empty apart from its own git repo, with a first commit so
+    # the coach can diff against it.
+    def init_work(course)
+      FileUtils.mkdir_p(course.app_dir)
+      return if File.directory?(File.join(course.app_dir, ".git"))
+
+      Solution.git(course.app_dir, "init", "-q")
+      Solution.git(course.app_dir, *Solution::GIT_ID, "commit", "-q", "--allow-empty", "-m", "Start")
+    end
+
+    def lesson_stub(l, split: false)
       meta = {
         "byox" => 1, "id" => l.id, "title" => l.title, "track" => l.track, "goal" => STUB,
         "concepts" => [], "resources" => [],
         "steps" => l.steps.map do |s|
-          { "id" => s.id, "title" => s.title, "kind" => "backend", "verify" => "sh course/verify/#{s.id}.sh",
+          { "id" => s.id, "title" => s.title, "kind" => "backend", "verify" => (split ? %(sh "$BYOX_COURSE/verify/#{s.id}.sh") : "sh course/verify/#{s.id}.sh"),
             "generators" => [], "generated" => [], "instructions" => STUB, "hints" => [STUB] * 3 }
         end,
       }

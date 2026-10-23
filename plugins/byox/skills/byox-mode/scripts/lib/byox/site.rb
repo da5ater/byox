@@ -184,7 +184,7 @@ module Byox
             FileUtils.mkdir_p(File.dirname(log_path))
             was_green = Status.lesson(c.outline, store.read, l.id) == :green
             code = File.open(log_path, "w") do |log|
-              Shell.stream(s.verify, cwd: c.dir, env: { "BYOX_STEP" => s.id, "BYOX_BIN" => BIN }) do |line|
+              Shell.stream(s.verify, cwd: c.app_dir, env: { "BYOX_STEP" => s.id, "BYOX_BIN" => BIN, "BYOX_COURSE" => c.course_dir }) do |line|
                 log.write(line)
                 emit.call("line", { "text" => line })
               end

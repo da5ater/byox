@@ -123,7 +123,7 @@ module Byox
       FileUtils.mkdir_p(File.join(ctx, "concepts"))
       File.write(File.join(ctx, "lesson.md"), revealed_only(input))
       File.write(File.join(ctx, "failure.txt"), input.failure_path && File.exist?(input.failure_path) ? File.read(input.failure_path) : "")
-      File.write(File.join(ctx, "learner.diff"), learner_diff(input.course.dir))
+      File.write(File.join(ctx, "learner.diff"), learner_diff(input.course.app_dir))
       input.lesson.concepts.each do |slug|
         src = input.config.concept_path(slug)
         FileUtils.cp(src, File.join(ctx, "concepts", "#{slug}.md")) if File.exist?(src)

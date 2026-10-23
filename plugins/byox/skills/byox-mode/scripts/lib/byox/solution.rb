@@ -57,7 +57,7 @@ module Byox
       Dir.mktmpdir("byox-compare-") do |tmp|
         export(course, last.tag, tmp)
         changed.reject(&:generated).map do |d|
-          mine = File.join(course.dir, d.path)
+          mine = File.join(course.app_dir, d.path)
           theirs = File.join(tmp, d.path)
           out, = Open3.capture2("git", "diff", "--no-index", "--no-color", "--no-prefix",
                                 File.exist?(mine) ? mine : File::NULL, File.exist?(theirs) ? theirs : File::NULL)

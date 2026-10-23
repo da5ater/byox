@@ -14,8 +14,8 @@ class TemplatesTest < Minitest::Test
     server.addr[1].tap { server.close }
   end
 
-  def run_script(name, env = {})
-    Open3.capture2e({ "BYOX_BIN" => Byox::BIN, "BYOX_STEP" => "04.1" }.merge(env), "sh", File.join(TEMPLATES, name), chdir: @dir)
+  def run_script(name, env = {}, chdir: @dir)
+    Open3.capture2e({ "BYOX_BIN" => Byox::BIN, "BYOX_STEP" => "04.1" }.merge(env), "sh", File.join(TEMPLATES, name), chdir:)
   end
 
   def page(color)
@@ -52,9 +52,26 @@ class TemplatesTest < Minitest::Test
     assert_nil `lsof -ti tcp:#{port} 2>/dev/null`.strip.then { _1.empty? ? nil : _1 }, "the template must stop the server it started"
   end
 
+  def test_the_visual_template_works_from_a_work_folder_through_byox_course
+    skip "needs Chrome and python3" unless Byox::Visual.chrome && system("python3", "--version", out: File::NULL)
+
+    FileUtils.mkdir_p(File.join(@dir, "course/tests/04.1"))
+    FileUtils.mkdir_p(File.join(@dir, "work/site"))
+    File.write(File.join(@dir, "work/site/index.html"), page("#1b2430"))
+    Byox::Visual.shot("file://#{@dir}/work/site/index.html", File.join(@dir, "course/tests/04.1/target.png"), width: 1280, height: 800)
+    port = free_port
+    env = { "BYOX_COURSE" => File.join(@dir, "course"), "START_CMD" => "python3 -m http.server #{port} --bind 127.0.0.1 --directory site",
+            "URL" => "http://127.0.0.1:#{port}/" }
+
+    out, status = run_script("verify-visual.sh", env, chdir: File.join(@dir, "work"))
+    assert status.success?, out
+    assert File.file?(File.join(@dir, "course/.cache/actual-04.1.png")), "screenshots go in the course folder"
+    assert_equal ["site"], Dir.children(File.join(@dir, "work")), "the learner's folder gets no cache files"
+  end
+
   def test_the_visual_template_says_so_when_the_app_never_answers
     FileUtils.mkdir_p(File.join(@dir, "course/tests/04.1"))
-    out, status = run_script("verify-visual.sh", "START_CMD" => "sleep 60", "URL" => "http://127.0.0.1:#{free_port}/")
+    out, status = run_script("verify-visual.sh", { "START_CMD" => "sleep 60", "URL" => "http://127.0.0.1:#{free_port}/" })
     refute status.success?
     assert_match(/Your app did not answer at http:\/\/127\.0\.0\.1:\d+\/ after 30 seconds/, out)
   end

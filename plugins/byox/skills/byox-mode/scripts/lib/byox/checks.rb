@@ -56,7 +56,8 @@ module Byox
     def tests_exist(course, lesson)
       lesson.steps.flat_map do |s|
         files = test_files(course, s)
-        missing = s.verify.scan(%r{course/\S+}).reject { File.exist?(File.join(course.dir, _1)) }
+        named = s.verify.scan(%r{course/[^\s"']+}) + s.verify.scan(%r{\$BYOX_COURSE/([^\s"']+)}).flatten.map { "course/#{_1}" }
+        missing = named.reject { File.exist?(File.join(course.dir, _1)) }
         [(Finding.new(:tests_exist, s.id, "no files in #{s.tests_dir}") if files.empty? && s.kind != "cloud"),
          *missing.map { Finding.new(:tests_exist, s.id, "verify names #{_1}, which does not exist") }].compact
       end
@@ -159,8 +160,8 @@ module Byox
       prev_exit, this_exit = [course.previous_tag(step.id), step.tag].map do |tag|
         Dir.mktmpdir("byox-strength-") do |tmp|
           Solution.export(course, tag, tmp)
-          File.symlink(course.course_dir, File.join(tmp, "course"))
-          Shell.capture(step.verify, cwd: tmp, env: { "BYOX_STEP" => step.id, "BYOX_BIN" => BIN }, timeout: 300).first
+          File.symlink(course.course_dir, File.join(tmp, "course")) unless course.layout == "split"
+          Shell.capture(step.verify, cwd: tmp, env: { "BYOX_STEP" => step.id, "BYOX_BIN" => BIN, "BYOX_COURSE" => course.course_dir }, timeout: 300).first
         end
       end
       verdict = if this_exit != 0 then "broken"
