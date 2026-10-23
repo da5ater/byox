@@ -21,7 +21,7 @@ byox is **Build Your Own X mode** for [Claude Code](https://code.claude.com). Gi
 - **Lessons that teach, not just tell.** A short read, the precise task, what the check does in plain English, ordered steps without code, gotchas, and three hints revealed one at a time.
 - **Real reading, not reference docs.** Each lesson points at the exact section of a human-written article or guide. Optional deep-dive concept pages build the idea up diagram by diagram.
 - **Written twice.** One agent writes each lesson. A second agent builds it as a learner from the page alone, scores it, and fixes what it finds.
-- **Frontend steps arrive as a design.** The agent hands you a design file you inspect like a Figma file, plus desktop and phone targets. Verify screenshots your page and shows where it differs in red. No design software or account is needed.
+- **Frontend steps arrive as a design.** The agent designs the step in [Penpot](https://penpot.app), the open source Figma alternative, through its official MCP server, and hands you the file plus desktop and phone targets. Verify screenshots your page and shows where it differs in red. Without Penpot connected, it falls back to a plain HTML design you open and inspect.
 - **Cloud and DevOps steps run the real CLI.** A bash check per step, boot.dev style, prints what passed and what it expected against what it got. It runs against your cloud account or a free local emulator.
 - **Ported to today's stack.** A Rails 6 course can become a Rails 8 course. The step tests prove the port behaves the same.
 - **Stuck help that never cheats.** Explain failure runs a coach that cannot read the solution or your unrevealed hints.
@@ -94,7 +94,7 @@ Press **Add lessons** on a course page and say what you want: the next chapters 
 
 ### Frontend and cloud steps
 
-- **Frontend.** Each step ships `course/design/<step>/design.html`, a self-contained design with its colors, type and spacing in CSS variables. Open it and use Inspect. The lesson shows the desktop and phone targets. Verify starts your app, takes screenshots with headless Chrome and compares them, and prints the percentage of pixels that differ. `byox shot` and `byox visual-diff` are the two tools behind it.
+- **Frontend.** With Penpot connected (a free account, an MCP key, and the file open in a browser tab), the agent builds each step as a Penpot file with named tokens and links it from the lesson. Otherwise each step ships `course/design/<step>/design.html`, a self-contained design with its colors, type and spacing in CSS variables. The lesson shows the desktop and phone targets either way. Verify starts your app, takes screenshots with headless Chrome and compares them, and prints the percentage of pixels that differ. `byox shot` and `byox visual-diff` are the two tools behind it. Penpot draws text differently from Chrome, so those steps compare 8px block averages (`--coarse 8`) and still catch wrong colors and layout.
 - **Cloud and DevOps.** Each step ships a bash script that runs the real CLI and checks its output. The AWS CLI reads `AWS_ENDPOINT_URL`, so the same script works against a free local emulator such as [Floci](https://github.com/floci-io/floci), which needs no account, and against real AWS.
 
 ## Configuration
