@@ -106,6 +106,27 @@ class MigrateTest < Minitest::Test
     assert status.success?, "the script still works from work/: #{out}"
   end
 
+  # A path in real shell is followed by ; or ) or | right away, and that punctuation is not
+  # part of the path. Comments are prose and are left alone.
+  def test_shell_punctuation_after_a_path_stays_outside_the_quotes_and_comments_are_untouched
+    script = File.join(@project, "course/verify/01.1.sh")
+    File.write(script, <<~SH)
+      #!/bin/sh
+      # The tests live in course/tests/01.1/ and the helper in course/support/x.rb
+      if [ -f course/tests/01.1/ping_test.rb ]; then echo ok; fi
+      (cat course/tests/01.1/ping_test.rb) | head -1 > /dev/null
+      test -f course/tests/01.1/ping_test.rb && echo done
+    SH
+    byox("migrate", @project)
+    lines = File.readlines(script, chomp: true)
+    assert_equal "# The tests live in course/tests/01.1/ and the helper in course/support/x.rb", lines[1], "a comment is not rewritten"
+    assert_equal %(if [ -f "$BYOX_COURSE/tests/01.1/ping_test.rb" ]; then echo ok; fi), lines[2]
+    assert_equal %[(cat "$BYOX_COURSE/tests/01.1/ping_test.rb") | head -1 > /dev/null], lines[3]
+    assert_equal %(test -f "$BYOX_COURSE/tests/01.1/ping_test.rb" && echo done), lines[4]
+    _, status = Open3.capture2e("sh", "-n", script)
+    assert status.success?, "the rewritten script still parses"
+  end
+
   def test_dry_run_changes_nothing_and_lists_the_plan
     learner_has_written("01.1")
     before = Dir.children(@project).sort

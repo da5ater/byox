@@ -215,6 +215,30 @@ class RegroupTest < Minitest::Test
     end
   end
 
+  def test_project_paths_followed_by_shell_punctuation_and_comments_are_handled_like_course_paths
+    File.write(File.join(@project, "course/verify/01.1.sh"), <<~SH)
+      #!/bin/sh
+      set -e
+      # the client/ folder holds the second project
+      if ! grep -q "x" client/readme.txt; then echo no; fi
+      if [ ! -f client/readme.txt ]; then exit 1; fi
+      (cat client/readme.txt) > /dev/null
+      cd client && test -f readme.txt
+      cd ..
+      exec ruby "$BYOX_COURSE/tests/01.1/ping_test.rb"
+    SH
+    byox("migrate", @project, "--projects", "api,client")
+    lines = File.readlines(File.join(@project, "course/verify/01.1.sh"), chomp: true)
+    assert_equal "# the client/ folder holds the second project", lines[2]
+    assert_equal %(if ! grep -q "x" "$BYOX_PROJECT_CLIENT/readme.txt"; then echo no; fi), lines[3]
+    assert_equal %(if [ ! -f "$BYOX_PROJECT_CLIENT/readme.txt" ]; then exit 1; fi), lines[4]
+    assert_equal %[(cat "$BYOX_PROJECT_CLIENT/readme.txt") > /dev/null], lines[5]
+    assert_equal %(cd "$BYOX_PROJECT_CLIENT" && test -f readme.txt), lines[6]
+    assert_equal "cd ..", lines[7], "a cd that is not into a project is left alone"
+    _, status = Open3.capture2e("sh", "-n", File.join(@project, "course/verify/01.1.sh"))
+    assert status.success?, "the rewritten script still parses"
+  end
+
   def test_dry_run_changes_nothing
     before = Dir.children(@work).sort
     code, out = byox("migrate", @project, "--projects", "api,client", "--dry-run")

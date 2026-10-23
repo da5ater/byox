@@ -9,7 +9,9 @@ module Byox
   # path inside one is reported for a person to look at.
   module Migrate
     # course/..., ./course/... and ../course/... from a subfolder the script cd'd into.
-    COURSE_PATH = %r{(?<![\w/.-])(?:\.{1,2}/)*course/(tests|verify|support|design|\.cache|source)/([^\s"']*)}
+    # A path stops at whitespace, a quote, or shell punctuation such as ; | & ( ) < >.
+    PATH_REST = %q{[^\s"';|&()<>`]*}
+    COURSE_PATH = %r{(?<![\w/.-])(?:\.{1,2}/)*course/(tests|verify|support|design|\.cache|source)/(#{PATH_REST})}
     Plan = Data.define(:moves, :rewrites, :warnings)
 
     module_function
@@ -83,7 +85,9 @@ module Byox
     end
 
     def rewrite_project_line(line, name, var)
-      line.gsub(%r{(?<![\w/.-])(?:\./)?#{Regexp.escape(name)}/([^\s"']*)}) do
+      return line if comment?(line)
+
+      line.gsub(%r{(?<![\w/.-])(?:\./)?#{Regexp.escape(name)}/(#{PATH_REST})}) do
         m = Regexp.last_match
         before = m.pre_match
         rest = m[1]
@@ -94,6 +98,8 @@ module Byox
         end
       end
     end
+
+    def comment?(line) = line.match?(/\A\s*#/)
 
     def rewrite_verify_lines(text)
       text.lines.map { |l| l.match?(/\A\s*verify:/) ? rewrite_line(l) : l }.join
@@ -106,6 +112,8 @@ module Byox
     # outside the quotes or it stops expanding. A path in single quotes would not expand the
     # variable, so it is left alone and reported.
     def rewrite_line(line)
+      return line if comment?(line)
+
       line.gsub(COURSE_PATH) do
         m = Regexp.last_match
         before = m.pre_match
