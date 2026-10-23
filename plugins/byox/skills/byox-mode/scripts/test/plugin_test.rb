@@ -44,7 +44,7 @@ class PluginTest < Minitest::Test
   def test_every_byox_command_the_skills_mention_exists
     usage = Open3.capture2e(File.expand_path("../byox", __dir__)).first
     text = Dir[File.join(PLUGIN, "skills/**/*.md"), File.join(PLUGIN, "agents/*.md")].map { File.read(_1) }.join("\n")
-    text.scan(/\bB (evidence|transcripts|feedback|shot|visual-diff|lint|strength|new|tag|sync|site|split|match)\b/).flatten.uniq.each do |cmd|
+    text.scan(/\bB (evidence|transcripts|feedback|shot|visual-diff|lint|strength|new|tag|sync|site|split|match|migrate)\b/).flatten.uniq.each do |cmd|
       assert_includes usage, "byox #{cmd}", "a skill uses `B #{cmd}`, which the CLI does not offer"
     end
   end

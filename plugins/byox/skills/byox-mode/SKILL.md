@@ -76,6 +76,7 @@ Two agents per lesson, one `lesson-writer` and then one `lesson-reviewer`, plus 
 | `byox strength COURSE_DIR [--lesson ID] [--step ID]` | Each step's verify must fail at the previous tag and pass at its own. |
 | `byox site [--root DIR] [--port 4917]` | Starts the local site for every compiled course under the root. |
 | `byox sync [--root DIR]` | Regenerates every `Courses/<slug>.md` from state. |
+| `byox migrate PROJECT_DIR [--dry-run]` | Turns an inline course into a split one: the learner's files move into `work/`, and verify commands and scripts use `$BYOX_COURSE`. Test files are never rewritten. Saves backups and an undo log in `course/.cache/`. |
 | `byox evidence [--since DATE]` | One digest across every course: struggles, notes, open feedback, lint. Keys are redacted. |
 | `byox transcripts` | This project's Claude Code sessions that used byox. |
 

@@ -112,7 +112,7 @@ A project is a folder with two folders in it:
   work/     your own project, with its own git repo
 ```
 
-`work/` holds only your code, so you can search and edit it freely without course files in the way. `course/` is the agent's, and you never need to open it. Courses made with an older version keep your app in the project folder itself, and byox still runs them.
+`work/` holds only your code, so you can search and edit it freely without course files in the way. `course/` is the agent's, and you never need to open it. Courses made with an older version keep your app in the project folder itself, and byox still runs them. Convert one with `byox migrate <project> --dry-run`, then without the flag.
 
 ## Configuration
 

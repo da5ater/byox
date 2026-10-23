@@ -23,7 +23,7 @@ A project is a folder with two folders in it and nothing else.
 
 `course.md` says `layout: split`. Every step's `verify` runs from `work/`, and scripts reach the course folder through `$BYOX_COURSE`, which byox sets. Never write a relative `course/` path in a script or a `verify` command of a split course.
 
-A course made before this layout has no `layout` line, which means `inline`. There the learner's app is the project folder itself, `course/` sits inside it, and `verify` runs from the project folder. byox still runs those courses. New courses are always split.
+A course made before this layout has no `layout` line, which means `inline`. There the learner's app is the project folder itself, `course/` sits inside it, and `verify` runs from the project folder. byox still runs those courses. New courses are always split. To convert an old one, run `byox migrate <project> --dry-run`, read the plan, then run it without the flag.
 
 ## Ids
 

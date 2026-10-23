@@ -16,6 +16,7 @@ module Byox
         byox sync     [--root DIR]
         byox shot URL OUT.png [--size 1280x800] [--wait MS]
         byox visual-diff TARGET.png ACTUAL.png [--tolerance 0.02] [--coarse 8] [--out DIFF.png]
+        byox migrate  PROJECT_DIR [--dry-run]
         byox evidence [--since DATE] [--root DIR]
         byox transcripts [--root DIR]
         byox feedback add TEXT [--page HASH] | list [--open] | mark ID... --pr URL   [--root DIR]
@@ -28,7 +29,7 @@ module Byox
 
     def run(argv)
       cmd = argv.shift
-      return usage unless %w[site lint strength new split match tag sync feedback shot visual-diff evidence transcripts].include?(cmd)
+      return usage unless %w[site lint strength new split match tag sync feedback shot visual-diff evidence transcripts migrate].include?(cmd)
 
       opts = {}
       args = OptionParser.new do |o|
@@ -46,6 +47,7 @@ module Byox
         o.on("--tolerance F", Float) { opts[:tolerance] = _1 }
         o.on("--coarse N", Integer) { opts[:coarse] = _1 }
         o.on("--since DATE") { opts[:since] = _1 }
+        o.on("--dry-run") { opts[:dry_run] = true }
         o.on("--out FILE") { opts[:out] = _1 }
         o.on("--open") { opts[:open] = true }
         o.on("--pr URL") { opts[:pr] = _1 }
@@ -235,6 +237,12 @@ module Byox
     def cmd_transcripts(_args, opts)
       puts %w[path bytes modified first\ prompt].join("\t")
       Evidence.transcripts(Config.load(opts[:root])).each { puts _1.join("\t") }
+      0
+    end
+
+    def cmd_migrate(args, opts)
+      dir = args.fetch(0) { return usage }
+      Migrate.run(dir, dry_run: opts[:dry_run])
       0
     end
   end
