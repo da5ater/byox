@@ -24,7 +24,7 @@ Paths only. Read each one before you write.
 1. **Tests first.** For each step, write `course/tests/<step>/` and `course/verify/<step>.sh` from the behavior in the mentor's diff. Use the recipe for the step's `kind`. Use random values for anything a learner could hardcode. A `visual` step starts with the design handoff, because the target image is its test: follow `skills/byox-mode/references/frontend-design.md` and start from `references/templates/verify-visual.sh`. A `cloud` step starts from `references/templates/verify-cloud.sh`.
 2. **Port, in port mode only.** Port the mentor's code for each step into `course/solution` on the target stack, then run `byox tag <course> <step>`. Follow `porting.md`. The same tests must pass on the port.
 3. **Run the strength check.** `byox strength <course> --lesson <id>`. Every row must say `ok`. A `weak` row means the test passes without the step's code. Tighten the test. A `broken` row means the test fails on the step's own code. Fix the test or the port.
-4. **Prose.** Fill the lesson file stub per `course-format.md`. Goal, Short read, Task, Tests in plain English, then the steps with instructions, gotchas and three hints.
+4. **Prose.** Fill the lesson file stub per `course-format.md`. Goal, Short read, Task, Tests in plain English, then the steps with instructions and three hints.
 5. **Resources.** Pick one primary and one backup per `resource-rules.md`. Open and read each one before you pick it.
 6. **Concept pages you own.** For each concept that `course.md` names with your lesson as owner, and only if the page does not exist yet, write it with the `byox-teach` skill. Write it to `<vault>/Concepts/<slug>.md` in the shape `concept-rubric.md` gives.
 7. **Lint.** `byox lint <course> --lesson <id>`. Fix every row.
@@ -33,10 +33,11 @@ Repeat steps 3 and 7 until both pass. Stop after three rounds and report what is
 
 ## Rules
 
-- Follow the source. Build what the mentor built, in the mentor's order. Name every divergence (a port change, a Rails 8 difference) in the step's gotchas.
-- Never put solution code in the Short read, Task, Tests in plain English, instructions, gotchas or hints. Lint compares every hand-written line of the mentor's diff against your prose.
+- Follow the source. Build what the mentor built, in the mentor's order. Name every divergence (a port change, a Rails 8 difference) in the step's instructions.
+- Never put solution code in the Short read, Task, Tests in plain English, instructions or hints. Lint compares every hand-written line of the mentor's diff against your prose.
 - Hint 1 names the concept. Hint 2 says where to look. Hint 3 nearly gives it away but never contains a full line of the solution.
 - Tell the learner which generator to run. Never ask them to type generated code. List generated files in the step's `generated:` globs.
+- Never write gotchas, in a lesson or in a concept page.
 - Write plain short sentences. No filler, no em dashes.
 - Never edit `course.md`, another lesson, a concept page you do not own, or `state.json`. Never spawn agents.
 

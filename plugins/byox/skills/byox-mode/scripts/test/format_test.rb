@@ -49,8 +49,34 @@ class FormatTest < Minitest::Test
   def test_concept_headings_must_appear_in_order
     path = File.join(@root, "vault", "Concepts", "stdin-loop.md")
     assert_empty Byox::Concept.parse(path).missing_headings
-    File.write(path, File.read(path).sub("## Gotchas", "## Pitfalls"))
-    assert_equal ["Gotchas"], Byox::Concept.parse(path).missing_headings
+    File.write(path, File.read(path).sub("## The problem", "## Problem"))
+    assert_equal ["The problem"], Byox::Concept.parse(path).missing_headings
+  end
+
+  def test_a_concept_page_does_not_need_a_gotchas_section
+    path = File.join(@root, "vault", "Concepts", "stdin-loop.md")
+    File.write(path, File.read(path).sub(/^## Gotchas\n.*?(?=^## )/m, ""))
+    refute_includes File.read(path), "## Gotchas"
+    assert_empty Byox::Concept.parse(path).missing_headings
+  end
+
+  def test_a_step_without_gotchas_is_a_complete_step
+    Fixture.edit_lesson(@root, "01-ping") { |t| t.gsub(/^ {4}gotchas: \|\n(?: {6}.*\n)+/, "") }
+    refute_includes File.read(File.join(@root, "mini-redis/course/lessons/01-ping.md")), "gotchas:"
+    lesson = @course.lesson("01-ping")
+    assert_equal ["", ""], lesson.steps.map(&:gotchas)
+    findings = Byox::Checks.lint(Fixture.course(@root), Fixture.config(@root), lesson: "01-ping", offline: true)
+    assert_empty findings, findings.inspect
+  end
+
+  def test_new_stubs_leave_gotchas_out
+    cmd = File.join(@root, "mini-redis/course/course.md")
+    File.write(cmd, File.read(cmd).sub(/^lessons:\n/, "lessons:\n  - id: 00-extra\n    title: Extra\n    steps:\n      - {id: \"00.1\", title: First}\n"))
+    _, status = Open3.capture2e(File.expand_path("../byox", __dir__), "new", File.join(@root, "mini-redis"))
+    assert status.success?
+    stub = File.read(File.join(@root, "mini-redis/course/lessons/00-extra.md"))
+    assert_includes stub, "instructions:"
+    refute_includes stub, "gotchas", "a new lesson stub no longer asks for gotchas"
   end
 
   def test_generated_globs

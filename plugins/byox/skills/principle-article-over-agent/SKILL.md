@@ -14,6 +14,6 @@ Before you explain something, find the human-written source that already explain
 
 1. Search for a teaching article, a book chapter or a video on the concept, ranked per `skills/byox-mode/references/resource-rules.md`.
 2. Open and read each candidate. Check that it covers this concept, on a close enough stack version.
-3. Link the exact section with one line on why. Then write the gap: the part specific to this lesson, the port difference, the gotcha the article misses.
+3. Link the exact section with one line on why. Then write the gap: the part specific to this lesson, the port difference, the detail the article misses.
 
 **The test:** Could a link to an existing section replace this paragraph? If yes, replace it.

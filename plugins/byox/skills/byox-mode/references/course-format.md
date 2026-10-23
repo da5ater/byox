@@ -101,9 +101,6 @@ steps:
     instructions: |
       1. Make every controller action require a signed-in user, in one place.
       2. Sign out, open `/courses`, and check you land on the log in page.
-    gotchas: |
-      - Devise's controllers inherit from your `ApplicationController`. Devise already
-        skips the check on its own sign in and sign up actions.
     hints:
       - Rails runs code before every action of a controller and its subclasses. Which controller do all yours inherit from?
       - Devise gives you a helper that redirects to the log in page when nobody is signed in.
@@ -131,6 +128,7 @@ The precise spec, as a short list.
 - Every step has `id`, `title`, `kind`, `verify`, `instructions` and exactly three `hints`. The parser rejects anything else, so the site never sees a step with two hints.
 - `verify` is one shell command run from the course dir. The site runs it and goes green on exit code 0. The learner could type it themselves.
 - `generators` lists commands like `bin/rails generate devise:install`. `generated` lists globs of the files they write, such as `db/migrate/*_devise_create_users.rb` or `test/**`. The solution view collapses those files, and the leak check ignores them.
+- Do not write gotchas. They did not help the learner. A course compiled earlier keeps its `gotchas` field, and the site still shows it.
 - `design_url` is optional. On a `visual` step, an https link to the design, such as a Penpot view link. The lesson page shows it as a button.
 - `fixed_values` is optional. Set it to one sentence when the expected answer is fixed by the task and cannot be randomized, such as an app's module name or the root route. Lint then skips its random-values check for that step. An empty reason does not count.
 - Tests in plain English has one `**<step id>.**` paragraph per step. Say exactly what the check sends and what it expects, including which values are random.
@@ -141,7 +139,7 @@ A ladder. Hint 1 names the concept. Hint 2 says where to look. Hint 3 nearly giv
 
 ### No solution in prose
 
-The goal, the three sections, instructions, gotchas and hints 1 and 2 never contain a line of the solution diff. Lint checks it the same way.
+The goal, the three sections, instructions and hints 1 and 2 never contain a line of the solution diff. Lint checks it the same way.
 
 ## What the site derives
 
@@ -161,14 +159,13 @@ Lessons unlock in order. Skip on a lesson unlocks the next one and its solution,
 
 ## Quality bar
 
-The auditor scores every lesson on these, 0 to 2 each. Every lesson must score 2 on R5, R6 and R7, and at least 16 of 20 overall, excluding R10. R10 must be 2.
+The auditor scores every lesson on these, 0 to 2 each. Every lesson must score 2 on R5, R6 and R7, and at least 15 of 18 overall, excluding R10. The numbering keeps its gaps so older audit reports stay readable. R10 must be 2.
 
 | # | Dimension | What a 2 looks like |
 |---|---|---|
 | R1 | Concept, the why | Explains the mechanism, not just the API. |
 | R2 | Task precision | Exact inputs and expected outputs. |
 | R3 | Tests in plain English | States what the check sends and expects, without reading test code. |
-| R4 | Gotchas | Concrete edge cases a beginner hits, not generic advice. |
 | R5 | Solution withheld | No solution code before the lesson is green or skipped. |
 | R6 | Steps without code | An ordered path that still leaves the typing to the learner. |
 | R7 | Hint ladder | Three escalating hints, revealed one at a time. |

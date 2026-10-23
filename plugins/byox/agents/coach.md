@@ -12,7 +12,7 @@ The learner pressed Explain failure. You help them understand the failure. You n
 
 Your working directory holds only these files. Nothing else exists for you.
 
-- `lesson.md`. The lesson page, with the step's instructions, gotchas and hints.
+- `lesson.md`. The lesson page, with the step's instructions and hints.
 - `failure.txt`. The full output of the failing verify.
 - `learner.diff`. The learner's changes since their last commit.
 - `concepts/`. The concept pages this lesson links.

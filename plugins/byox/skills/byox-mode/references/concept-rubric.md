@@ -22,12 +22,10 @@ resources:
 
 ## What Devise does for you
 
-## Gotchas
-
 ## Diagrams
 ```
 
-The six headings appear in this order. The fourth starts with "What " and names the gem or framework. Lint checks the headings. The site appends "Where it shows up" from every lesson that lists the concept, so never write that section.
+The five headings appear in this order. The fourth starts with "What " and names the gem or framework. Lint checks the headings. The site appends "Where it shows up" from every lesson that lists the concept, so never write that section.
 
 ## What each section holds
 
@@ -35,8 +33,7 @@ The six headings appear in this order. The fourth starts with "What " and names 
 2. **How it works.** The mechanism, step by step, with no metaphors.
 3. **A tiny example.** Outside the project, small enough to type in a few minutes. Sessions by hand in a 20-line Rack app, before Devise.
 4. **What the gem does for you.** What it does, and what it hides from you.
-5. **Gotchas.** Common misconceptions and edge cases, each one concrete.
-6. **Diagrams.** A series of mermaid diagrams. Each one redraws the last and adds one part. Never one diagram with every part at once.
+5. **Diagrams.** A series of mermaid diagrams. Each one redraws the last and adds one part. Never one diagram with every part at once.
 
 ## Calibration
 
@@ -51,8 +48,7 @@ The reviewer answers each with yes or no. Every no gets fixed.
 3. Does How it works describe the mechanism with no metaphor?
 4. Could the learner type the tiny example in under ten minutes, outside the project?
 5. Does the What section name what the gem hides?
-6. Is every gotcha specific to this concept?
-7. Do the diagrams build up one part at a time?
-8. Does every linked resource pass `resource-rules.md`?
-9. Is anything on the page something the learner profile says they know? It should not be.
-10. Is the prose plain, with short sentences, no filler, no em dashes, and one name per idea?
+6. Do the diagrams build up one part at a time?
+7. Does every linked resource pass `resource-rules.md`?
+8. Is anything on the page something the learner profile says they know? It should not be.
+9. Is the prose plain, with short sentences, no filler, no em dashes, and one name per idea?

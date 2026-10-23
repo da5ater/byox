@@ -18,7 +18,7 @@ byox is **Build Your Own X mode** for [Claude Code](https://code.claude.com). Gi
 
 - **Any source.** Transcripts (matched to the mentor's repo when one exists), repo history grouped into lessons, or articles.
 - **A test for every step, proven.** Each step's test must fail on the mentor's code before the step and pass after it. A script checks this, so a weak test never ships.
-- **Lessons that teach, not just tell.** A short read, the precise task, what the check does in plain English, ordered steps without code, gotchas, and three hints revealed one at a time.
+- **Lessons that teach, not just tell.** A short read, the precise task, what the check does in plain English, ordered steps without code, and three hints revealed one at a time.
 - **Real reading, not reference docs.** Each lesson points at the exact section of a human-written article or guide. Optional deep-dive concept pages build the idea up diagram by diagram.
 - **Written twice.** One agent writes each lesson. A second agent builds it as a learner from the page alone, scores it, and fixes what it finds.
 - **Frontend steps arrive as a design.** The agent designs the step in [Penpot](https://penpot.app), the open source Figma alternative, through its official MCP server, and hands you the file plus desktop and phone targets. Verify screenshots your page and shows where it differs in red. Without Penpot connected, it falls back to a plain HTML design you open and inspect.
@@ -90,7 +90,7 @@ After you have worked through some lessons, or after a compile that went badly, 
 | Short read | About two minutes on why, rewritten from the source with the rambling removed |
 | Task | The precise spec |
 | Tests in plain English | What the check sends and what it expects |
-| Steps | Ordered instructions without code, gotchas, three hints and a Verify button |
+| Steps | Ordered instructions without code, three hints and a Verify button |
 | Resource | One article or guide, at the exact section |
 | Go deep | Concept pages for the ideas the lesson uses |
 | Mentor's solution | Locked until the lesson is green or skipped |

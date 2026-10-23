@@ -16,7 +16,8 @@ module Byox
   STEP_ID = /\A\d{2}\.\d+\z/
   KINDS = %w[backend cli ui visual cloud perf stub].freeze
   SECTIONS = { "Short read" => :short_read, "Task" => :task, "Tests in plain English" => :tests }.freeze
-  CONCEPT_HEADINGS = ["The problem", "How it works", "A tiny example", "What ", "Gotchas", "Diagrams"].freeze
+  # A "Gotchas" section is no longer written, so it is not required. Older pages that have it still match in order.
+  CONCEPT_HEADINGS = ["The problem", "How it works", "A tiny example", "What ", "Diagrams"].freeze
 
   Resource = Data.define(:url, :section, :why)
 

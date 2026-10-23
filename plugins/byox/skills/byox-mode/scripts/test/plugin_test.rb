@@ -48,4 +48,22 @@ class PluginTest < Minitest::Test
       assert_includes usage, "byox #{cmd}", "a skill uses `B #{cmd}`, which the CLI does not offer"
     end
   end
+
+  # Gotchas were dropped: they did not help the learner. Old courses keep theirs, so the
+  # parser still reads the field, but no instruction may ask an agent to write one.
+  def test_no_instruction_asks_for_gotchas
+    files = Dir[File.join(PLUGIN, "skills/**/*.md"), File.join(PLUGIN, "agents/*.md")]
+    hits = files.flat_map do |f|
+      File.readlines(f).each_with_index.filter_map { |l, i| "#{f.delete_prefix("#{PLUGIN}/")}:#{i + 1}: #{l.strip[0, 90]}" if l.match?(/gotcha/i) }
+    end
+    allowed = hits.select { _1.match?(/\A(skills\/byox-mode\/references\/course-format\.md|agents\/lesson-writer\.md):\d+: .*(do not write|never write)/i) }
+    assert_equal %w[agents/lesson-writer.md skills/byox-mode/references/course-format.md], allowed.map { _1[/\A[^:]+/] }.sort,
+                 "only the format doc and the writer may say, once each, that gotchas are not written"
+    assert_empty hits - allowed, "these instructions still mention gotchas:\n#{(hits - allowed).join("\n")}"
+  end
+
+  def test_the_writer_is_told_not_to_write_gotchas
+    writer = File.read(File.join(PLUGIN, "agents/lesson-writer.md"))
+    assert_match(/Never write gotchas/, writer)
+  end
 end

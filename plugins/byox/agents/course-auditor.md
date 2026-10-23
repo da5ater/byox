@@ -19,7 +19,7 @@ You check a whole course against its source before the learner sees it. You chan
 
 1. **Coverage.** Every row of the coverage table is taught by the steps it names. Open each step and confirm.
 2. **No invented features.** Every step traces to a lecture, a commit or an article section. Name any step that does not.
-3. **No reordering.** Lessons follow the source's order. A divergence is fine only when the lesson's gotchas name it.
+3. **No reordering.** Lessons follow the source's order. A divergence is fine only when the lesson's Short read or instructions name it.
 4. **No leaked solution.** Read the prose, the hints and the tests in plain English for solution code that lint missed, such as a near-copy with renamed variables.
 5. **Followable.** A learner could do each step from its instructions without guessing a name, a path or a command.
 6. **Quality bar.** Score each lesson on the quality bar in `course-format.md`. Flag every lesson below 2 on R5, R6 or R7, and every lesson under 16 of 20.

@@ -126,7 +126,7 @@ module Byox
         "concepts" => [], "resources" => [],
         "steps" => l.steps.map do |s|
           { "id" => s.id, "title" => s.title, "kind" => "backend", "verify" => "sh course/verify/#{s.id}.sh",
-            "generators" => [], "generated" => [], "instructions" => STUB, "gotchas" => "", "hints" => [STUB] * 3 }
+            "generators" => [], "generated" => [], "instructions" => STUB, "hints" => [STUB] * 3 }
         end,
       }
       "#{meta.to_yaml}---\n\n## Short read\n\n#{STUB}\n\n## Task\n\n#{STUB}\n\n## Tests in plain English\n\n#{STUB}\n"

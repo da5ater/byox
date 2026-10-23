@@ -18,7 +18,7 @@ Port by running the same generator commands the step lists, in the solution work
 - A generator may leave a file that breaks the step's tests. Devise's `users.yml` fixture holds two empty users that collide on the unique email index.
 - A CLI bound to another Ruby skips post-install steps silently. `rails new` run through a `#!/usr/bin/ruby` binstub left out importmap, Turbo and Stimulus.
 
-Each finding becomes a gotcha, an instruction or a hint in the step.
+Each finding becomes an instruction or a hint in the step.
 
 Writers of a ported course run in lesson order, because lesson N's port starts from lesson N-1's last tag.
 
@@ -33,4 +33,4 @@ Writers of a ported course run in lesson order, because lesson N's port starts f
 - Features, their order, and their visible behavior.
 - The mentor's domain names: models, routes and columns.
 
-Name every change in the step's gotchas, so the learner knows why their code differs from the video. The solution view shows the ported code, with `course/source/diffs/<step>.diff` as the original diff.
+Name every change in the step's instructions, so the learner knows why their code differs from the video. The solution view shows the ported code, with `course/source/diffs/<step>.diff` as the original diff.

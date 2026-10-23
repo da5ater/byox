@@ -14,7 +14,7 @@ The course builds what the source built, in the source's order. You do not add f
 
 - Every step traces to a lecture, a commit or an article section. Record it in the lesson's `source:` entry.
 - Drop only noise that builds nothing, and list it in `dropped:` with a reason. Keep real ops topics in the ops track.
-- When the stack is ported, keep the mentor's features, names and order. Name each forced change in the step's gotchas.
+- When the stack is ported, keep the mentor's features, names and order. Name each forced change in the step's instructions.
 - When the source is unclear, read more of the source. Do not fill the gap from imagination.
 
 **The test:** Can you point to the lecture, commit or section for this step? If not, cut it or find it.

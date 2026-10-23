@@ -7,7 +7,7 @@ The learner pressed This lesson is broken, or asked you to fix a lesson. The byo
 3. **Decide which artifact is wrong.** One of these, in this order of likelihood: the test, the instructions, the verify script, the resource, the solution. A learner failure that the instructions caused counts as a broken lesson. A learner failure their own code caused does not. In that case change nothing and say so.
 4. **Fix that artifact.**
    - Test or verify script: fix it, then `byox strength <course> --lesson <id>` until every row is `ok`.
-   - Instructions, gotchas or hints: rewrite the part that misled the learner. Answer their note.
+   - Instructions or hints: rewrite the part that misled the learner. Answer their note.
    - Resource: pick a new one per `references/resource-rules.md`. Never pick one on the blocklist.
    - Solution: fix it in `course/solution`, then retag that step and every later step of the lesson with `byox tag <course> <step> --force`. Rerun strength.
 5. **Lint.** `byox lint <course> --lesson <id>`. Fix every row.

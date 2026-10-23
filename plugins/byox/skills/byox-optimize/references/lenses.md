@@ -9,7 +9,7 @@ Where did the learner lose time, guess, or get stuck, and which part of byox mad
 - Steps with many attempts, never passed, or passed only after all three hints.
 - Lessons skipped, and the notes the learner left: Unclear, Broken, Bad resource, Explain failure.
 - Open feedback, and the moments in sessions where the learner corrected the agent, called something clunky or wrong, or repeated an instruction.
-- Compare lessons that went well with ones that did not. What did the good ones have: a gotcha found by running the code, a smaller step, a better resource?
+- Compare lessons that went well with ones that did not. What did the good ones have: a detail found by running the code, a smaller step, a better resource?
 
 Trace each friction point to its cause in byox: a lesson-format rule that is missing, a hint-ladder rule that is too loose, a step size, a resource rule, a UI gap.
 
