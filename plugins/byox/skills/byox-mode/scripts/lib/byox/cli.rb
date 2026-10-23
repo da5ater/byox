@@ -16,7 +16,7 @@ module Byox
         byox sync     [--root DIR]
         byox shot URL OUT.png [--size 1280x800] [--wait MS]
         byox visual-diff TARGET.png ACTUAL.png [--tolerance 0.02] [--coarse 8] [--out DIFF.png]
-        byox migrate  PROJECT_DIR [--dry-run]
+        byox migrate  PROJECT_DIR [--projects api,frontend] [--dry-run]
         byox evidence [--since DATE] [--root DIR]
         byox transcripts [--root DIR]
         byox feedback add TEXT [--page HASH] | list [--open] | mark ID... --pr URL   [--root DIR]
@@ -48,6 +48,7 @@ module Byox
         o.on("--coarse N", Integer) { opts[:coarse] = _1 }
         o.on("--since DATE") { opts[:since] = _1 }
         o.on("--dry-run") { opts[:dry_run] = true }
+        o.on("--projects LIST") { opts[:projects] = _1.split(",").map(&:strip) }
         o.on("--out FILE") { opts[:out] = _1 }
         o.on("--open") { opts[:open] = true }
         o.on("--pr URL") { opts[:pr] = _1 }
@@ -126,11 +127,14 @@ module Byox
     # The learner's own folder: empty apart from its own git repo, with a first commit so
     # the coach can diff against it.
     def init_work(course)
-      FileUtils.mkdir_p(course.app_dir)
-      return if File.directory?(File.join(course.app_dir, ".git"))
+      course.projects.each do |p|
+        dir = course.project_dir(p)
+        FileUtils.mkdir_p(dir)
+        next if File.directory?(File.join(dir, ".git"))
 
-      Solution.git(course.app_dir, "init", "-q")
-      Solution.git(course.app_dir, *Solution::GIT_ID, "commit", "-q", "--allow-empty", "-m", "Start")
+        Solution.git(dir, "init", "-q")
+        Solution.git(dir, *Solution::GIT_ID, "commit", "-q", "--allow-empty", "-m", "Start")
+      end
     end
 
     def lesson_stub(l, split: false)
@@ -242,7 +246,7 @@ module Byox
 
     def cmd_migrate(args, opts)
       dir = args.fetch(0) { return usage }
-      Migrate.run(dir, dry_run: opts[:dry_run])
+      Migrate.run(dir, dry_run: opts[:dry_run], projects: opts[:projects])
       0
     end
   end

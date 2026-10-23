@@ -367,7 +367,9 @@ module MiniRedis
 
   # layout :inline keeps the learner's app in the project folder next to course/. :split puts
   # it in work/, so the project folder holds only course/ and work/.
-  def build(root, agent_cmd: "claude -p", layout: :inline)
+  # projects: :two makes work/ hold two project folders, api (the Ruby program, solution root)
+  # and client (a tiny second project, solution subfolder client/).
+  def build(root, agent_cmd: "claude -p", layout: :inline, projects: nil)
     root = File.expand_path(root)
     vault = File.join(root, "vault")
     write(File.join(root, "byox.yml"), "vault: #{vault}\nagent_cmd: #{agent_cmd}\n")
@@ -377,8 +379,11 @@ module MiniRedis
 
     app = File.join(root, "mini-redis")
     c = File.join(app, "course")
-    split = layout == :split
-    write(File.join(c, "course.md"), split ? COURSE_MD.sub("byox: 1", "byox: 1\nlayout: split") : COURSE_MD)
+    two = projects == :two
+    split = layout == :split || two
+    course_md = split ? COURSE_MD.sub("byox: 1", "byox: 1\nlayout: split") : COURSE_MD
+    course_md = course_md.sub("layout: split\n", "layout: split\nprojects:\n  - {name: api, source: \".\", description: The Ruby program}\n  - {name: client, source: client, description: A tiny second project}\n") if two
+    write(File.join(c, "course.md"), course_md)
     write(File.join(c, ".gitignore"), "solution/\nstate.json\n.cache/\n")
     LESSONS.each do |id, text|
       text = text.gsub(/verify: sh course\/verify\/([\d.]+)\.sh/, 'verify: sh "$BYOX_COURSE/verify/\1.sh"') if split
@@ -387,7 +392,8 @@ module MiniRedis
     TESTS.each do |step, (name, text)|
       write(File.join(c, "tests", step, name), text)
       script = split ? %(exec ruby "$BYOX_COURSE/tests/#{step}/#{name}") : "exec ruby course/tests/#{step}/#{name}"
-      write(File.join(c, "verify", "#{step}.sh"), "#!/bin/sh\nset -e\n#{script}\n")
+      check = two && step == "01.1" ? %(test "$(cat "$BYOX_PROJECT_CLIENT/readme.txt" 2>/dev/null)" = client || { echo "client/readme.txt must say client"; exit 1; }\n) : ""
+      write(File.join(c, "verify", "#{step}.sh"), "#!/bin/sh\nset -e\n#{check}#{script}\n")
     end
 
     sol = File.join(c, "solution")
@@ -397,12 +403,23 @@ module MiniRedis
     git(sol, "tag", "base")
     SOLUTION.each do |step, code|
       File.write(File.join(sol, "main.rb"), code)
+      if two
+        FileUtils.mkdir_p(File.join(sol, "client"))
+        File.write(File.join(sol, "client", "readme.txt"), "client\n")
+      end
       git(sol, "add", "-A")
       git(sol, "commit", "-q", "-m", step)
       git(sol, "tag", "step-#{step}")
     end
 
-    if split
+    if two
+      %w[api client].each do |name|
+        dir = File.join(app, "work", name)
+        FileUtils.mkdir_p(dir)
+        git(dir, "init", "-q")
+        git(dir, "commit", "-q", "--allow-empty", "-m", "Start #{name}")
+      end
+    elsif split
       work = File.join(app, "work")
       FileUtils.mkdir_p(work)
       git(work, "init", "-q")

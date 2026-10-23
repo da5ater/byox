@@ -23,7 +23,7 @@ module Byox
     def lint(course, config, lesson: nil, offline: false)
       ids = lesson ? [lesson] : course.outline.map(&:id)
       findings = ids.flat_map { lint_lesson(course, config, _1, offline:) }
-      findings += outline_matches_files(course) unless lesson
+      findings += outline_matches_files(course) + project_findings(course) unless lesson
       findings
     end
 
@@ -34,9 +34,46 @@ module Byox
       l = Lesson.parse(path)
       [*outline_matches_lesson(course, l), *tests_exist(course, l), *random_values_in_tests(course, l),
        *hint3_no_solution(course, l), *no_solution_leak(course, l), *resources(config, l),
-       *links_resolve(l, offline:), *concept_pages(config, l)]
+       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l)]
     rescue FormatError => e
       e.problems.map { |check, msg| Finding.new(check, id, msg) }
+    end
+
+    PROJECT_NAME = /\A[a-z][a-z0-9_-]*\z/
+
+    def project_findings(course)
+      return [] unless course.multi?
+
+      seen = {}
+      course.projects.flat_map do |p|
+        out = []
+        out << Finding.new(:projects, "course.md", "project name #{p.name.inspect} must be lowercase letters, digits, - or _") unless p.name.match?(PROJECT_NAME)
+        out << Finding.new(:projects, "course.md", "duplicate project name #{p.name}") if seen[p.name]
+        seen[p.name] = true
+        unless safe_relative?(p.path)
+          out << Finding.new(:projects, "course.md", "project #{p.name} path #{p.path} must stay inside work/")
+        end
+        unless safe_relative?(p.source)
+          out << Finding.new(:projects, "course.md", "project #{p.name} source #{p.source} must stay inside the solution repo")
+        end
+        out
+      end
+    end
+
+    def safe_relative?(path) = !path.start_with?("/") && !path.split("/").include?("..")
+
+    # A verify command or script may only name projects the course declares.
+    def project_refs(course, lesson)
+      return [] unless course.multi?
+
+      declared = course.projects.map { _1.name.upcase.gsub(/[^A-Z0-9]/, "_") }
+      lesson.steps.flat_map do |s|
+        files = s.verify.scan(%r{(?:\$BYOX_COURSE|course)/(verify/[^\s"']+)}).flatten.map { File.join(course.course_dir, _1) }
+        text = [s.verify, *files.select { File.file?(_1) }.map { File.read(_1) }].join("\n")
+        text.scan(/\$\{?BYOX_PROJECT_([A-Z0-9_]+)/).flatten.uniq.reject { declared.include?(_1) }.map do |name|
+          Finding.new(:projects, s.id, "#{s.id} verify uses $BYOX_PROJECT_#{name}, but course.md declares #{course.projects.map(&:name).join(', ')}")
+        end
+      end
     end
 
     def outline_matches_lesson(course, lesson)
@@ -159,9 +196,11 @@ module Byox
 
       prev_exit, this_exit = [course.previous_tag(step.id), step.tag].map do |tag|
         Dir.mktmpdir("byox-strength-") do |tmp|
-          Solution.export(course, tag, tmp)
+          Solution.export_work(course, tag, tmp)
           File.symlink(course.course_dir, File.join(tmp, "course")) unless course.layout == "split"
-          Shell.capture(step.verify, cwd: tmp, env: { "BYOX_STEP" => step.id, "BYOX_BIN" => BIN, "BYOX_COURSE" => course.course_dir }, timeout: 300).first
+          env = { "BYOX_STEP" => step.id, "BYOX_BIN" => BIN }.merge(course.project_env(tmp))
+          cwd = course.layout == "split" ? course.project_dir(course.projects.first, tmp) : tmp
+          Shell.capture(step.verify, cwd:, env:, timeout: 300).first
         end
       end
       verdict = if this_exit != 0 then "broken"

@@ -28,6 +28,10 @@ module Byox
 
   Lesson = Data.define(:id, :title, :track, :goal, :concepts, :resources, :steps, :sections, :path)
 
+  # One folder of the learner's work: path is under work/, source is where it lives in the
+  # solution repo ("." is the repo root).
+  Project = Data.define(:name, :path, :source, :description)
+
   OutlineStep = Data.define(:id, :title)
   OutlineLesson = Data.define(:id, :title, :track, :steps, :building)
 
@@ -39,7 +43,33 @@ module Byox
     # "split": the project folder holds course/ for the agent and work/ for the learner.
     # "inline" is the older layout, where the learner's app is the project folder itself.
     def layout = meta["layout"] == "split" ? "split" : "inline"
-    def app_dir = layout == "split" ? File.join(dir, "work") : dir
+    def work_dir = File.join(dir, "work")
+
+    # A course with no `projects:` has one project, work/ itself. Declared projects are
+    # folders inside work/, and the first is the main one, where verify runs.
+    def multi? = !Array(meta["projects"]).empty?
+
+    def projects
+      return [Project.new(name: "work", path: ".", source: ".", description: nil)] unless multi?
+
+      Array(meta["projects"]).map do |p|
+        name = p["name"].to_s
+        Project.new(name:, path: (p["path"] || name).to_s, source: (p["source"] || name).to_s, description: p["description"])
+      end
+    end
+
+    def project_dir(project, work = work_dir) = File.expand_path(project.path, work)
+    def app_dir = layout == "split" ? project_dir(projects.first) : dir
+
+    # What a verify script is told about the layout. work overrides the work folder, for a
+    # temporary export of a solution tag.
+    def project_env(work = work_dir)
+      return { "BYOX_COURSE" => course_dir } unless layout == "split"
+
+      projects.each_with_object({ "BYOX_COURSE" => course_dir, "BYOX_WORK" => work }) do |p, env|
+        env["BYOX_PROJECT_#{p.name.upcase.gsub(/[^A-Z0-9]/, '_')}"] = project_dir(p, work)
+      end
+    end
     def lesson_path(id) = File.join(course_dir, "lessons", "#{id}.md")
     def solution_dir = File.join(course_dir, "solution")
     def state_path = File.join(course_dir, "state.json")

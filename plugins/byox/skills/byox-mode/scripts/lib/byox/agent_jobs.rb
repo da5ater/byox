@@ -123,7 +123,7 @@ module Byox
       FileUtils.mkdir_p(File.join(ctx, "concepts"))
       File.write(File.join(ctx, "lesson.md"), revealed_only(input))
       File.write(File.join(ctx, "failure.txt"), input.failure_path && File.exist?(input.failure_path) ? File.read(input.failure_path) : "")
-      File.write(File.join(ctx, "learner.diff"), learner_diff(input.course.app_dir))
+      File.write(File.join(ctx, "learner.diff"), learner_diffs(input.course))
       input.lesson.concepts.each do |slug|
         src = input.config.concept_path(slug)
         FileUtils.cp(src, File.join(ctx, "concepts", "#{slug}.md")) if File.exist?(src)
@@ -137,6 +137,13 @@ module Byox
       state = State.load(input.course.state_path)
       meta["steps"].each { |s| s["hints"] = Array(s["hints"]).first(Status.hints_revealed(state, s["id"].to_s)) }
       "#{YAML.dump(meta)}---\n#{body}"
+    end
+
+    # One section per project when the work is split into several, each from its own repo.
+    def learner_diffs(course)
+      return learner_diff(course.app_dir) unless course.layout == "split" && course.multi?
+
+      course.projects.map { |p| "### project #{p.name}\n#{learner_diff(course.project_dir(p))}" }.join("\n")
     end
 
     def learner_diff(dir)

@@ -128,7 +128,8 @@ module Byox
           { "id" => l.id, "title" => l.title, "track" => l.track, "status" => Status.lesson(c.outline, state, l.id),
             "steps" => l.steps.map { |s| { "id" => s.id, "title" => s.title, "status" => Status.step(c.outline, state, s.id) } } }
         end
-        Http.json(200, { "slug" => c.slug, "title" => c.title, "progress" => Status.progress(c.outline, state), "lessons" => lessons })
+        Http.json(200, { "slug" => c.slug, "title" => c.title, "progress" => Status.progress(c.outline, state), "lessons" => lessons,
+                         "projects" => projects_json(c) })
       end
 
       def lesson(_req, course:, lesson:)
@@ -141,6 +142,13 @@ module Byox
         Http.json(200, lesson_view(c, l, state, status))
       end
 
+      # The folders of the learner's work, shown so a lesson never has to guess where to work.
+      def projects_json(c)
+        return [] unless c.layout == "split" && c.multi?
+
+        c.projects.map { |p| { "name" => p.name, "folder" => File.join("work", p.path), "description" => p.description } }
+      end
+
       def lesson_view(c, l, state, status)
         blocked = @config.blocklist
         resources = l.resources.map { |r| r.to_h.transform_keys(&:to_s).merge("blocked" => blocked.include?(r.url)) }
@@ -150,6 +158,7 @@ module Byox
           "steps" => l.steps.map { step_view(c, _1, state) },
           "resources" => resources, "resource" => resources.find { !_1["blocked"] },
           "concepts" => l.concepts.map { |s| { "slug" => s, "exists" => File.exist?(@config.concept_path(s)) } },
+          "projects" => projects_json(c),
           "solution_unlocked" => Status.solution_unlocked?(c.outline, state, l.id),
           "next_lesson" => c.outline[i + 1]&.id }
       end
@@ -184,7 +193,7 @@ module Byox
             FileUtils.mkdir_p(File.dirname(log_path))
             was_green = Status.lesson(c.outline, store.read, l.id) == :green
             code = File.open(log_path, "w") do |log|
-              Shell.stream(s.verify, cwd: c.app_dir, env: { "BYOX_STEP" => s.id, "BYOX_BIN" => BIN, "BYOX_COURSE" => c.course_dir }) do |line|
+              Shell.stream(s.verify, cwd: c.app_dir, env: { "BYOX_STEP" => s.id, "BYOX_BIN" => BIN }.merge(c.project_env)) do |line|
                 log.write(line)
                 emit.call("line", { "text" => line })
               end

@@ -29,6 +29,47 @@ module Byox
       raise "cannot export #{tag}" unless ok
     end
 
+    # Exports a solution tag the way the learner's work/ folder is laid out. With one project
+    # the whole tree is the work folder. With several, each project gets its own part of the
+    # tree: its source folder, minus the parts that belong to other projects.
+    def export_work(course, tag, dest)
+      return export(course, tag, dest) unless course.multi?
+
+      course.projects.each do |p|
+        target = course.project_dir(p, dest)
+        FileUtils.mkdir_p(target)
+        next unless p.source == "." || tree?(course, "#{tag}:#{p.source}")
+
+        ref = p.source == "." ? tag : "#{tag}:#{p.source}"
+        ok = system("git -C #{course.solution_dir.shellescape} archive #{ref.shellescape} | tar -x -C #{target.shellescape}")
+        raise "cannot export #{ref}" unless ok
+
+        course.projects.each do |o|
+          rel = relative_source(p.source, o.source)
+          FileUtils.rm_rf(File.join(target, rel)) if rel
+        end
+      end
+    end
+
+    def tree?(course, ref) = system("git", "-C", course.solution_dir, "cat-file", "-e", ref, out: File::NULL, err: File::NULL)
+
+    # Where another project's source sits inside this one's, or nil when it does not.
+    def relative_source(mine, other)
+      return nil if mine == other || other == "."
+
+      mine == "." ? other : (other.start_with?("#{mine}/") ? other.delete_prefix("#{mine}/") : nil)
+    end
+
+    # The learner's file that matches a path in the solution repo.
+    def learner_path(course, rel)
+      return File.join(course.app_dir, rel) unless course.multi?
+
+      owner = course.projects.select { |q| q.source == "." || rel == q.source || rel.start_with?("#{q.source}/") }
+                     .max_by { _1.source == "." ? 0 : _1.source.size }
+      sub = owner.source == "." ? rel : rel.delete_prefix("#{owner.source}/")
+      File.join(course.project_dir(owner), sub)
+    end
+
     def split_patch(patch, globs)
       patch.split(/^(?=diff --git )/).filter_map do |chunk|
         path = chunk[%r{\Adiff --git a/\S+ b/(\S+)}, 1] or next
@@ -57,7 +98,7 @@ module Byox
       Dir.mktmpdir("byox-compare-") do |tmp|
         export(course, last.tag, tmp)
         changed.reject(&:generated).map do |d|
-          mine = File.join(course.app_dir, d.path)
+          mine = learner_path(course, d.path)
           theirs = File.join(tmp, d.path)
           out, = Open3.capture2("git", "diff", "--no-index", "--no-color", "--no-prefix",
                                 File.exist?(mine) ? mine : File::NULL, File.exist?(theirs) ? theirs : File::NULL)
