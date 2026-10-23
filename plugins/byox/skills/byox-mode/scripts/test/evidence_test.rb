@@ -96,6 +96,17 @@ class EvidenceTest < Minitest::Test
     refute_includes out, "private chat"
   end
 
+  def test_transcripts_follow_a_symlinked_root_to_the_real_folder
+    real = File.realpath(@root)
+    link = File.join(@home, "byox-courses")
+    File.symlink(real, link)
+    dir = File.join(@home, ".claude/projects", encoded(real))
+    write_transcript(dir, "a.jsonl", "/byox-mode this transcript ~/Downloads/x.txt")
+    out, status = Open3.capture2e({ "HOME" => @home }, File.expand_path("../byox", __dir__), "transcripts", "--root", link)
+    assert status.success?, out
+    assert_equal [File.join(dir, "a.jsonl")], out.lines.drop(1).map { _1.split("\t").first }
+  end
+
   def test_transcripts_is_quiet_when_there_are_none
     code, out = byox("transcripts")
     assert_equal [0, "path\tbytes\tmodified\tfirst prompt\n"], [code, out]

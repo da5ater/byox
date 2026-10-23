@@ -85,12 +85,15 @@ module Byox
     # Session transcripts of this project that used byox. Only this project's folder under
     # ~/.claude/projects is read. Other projects' chats are private and never touched.
     def transcripts(config)
-      dirs = [config.root, config.plugin_repo].compact.uniq.map { File.join(Dir.home, ".claude", "projects", File.expand_path(_1).gsub(/[^A-Za-z0-9]/, "-")) }
+      dirs = [config.root, config.plugin_repo].compact.map { real(_1) }.uniq.map { File.join(Dir.home, ".claude", "projects", _1.gsub(/[^A-Za-z0-9]/, "-")) }
       files = dirs.flat_map { |d| Dir[File.join(d, "*.jsonl"), File.join(d, "*", "*.jsonl")] }
       files.select { mentions_byox?(_1) }.sort_by { -File.mtime(_1).to_f }.map do |path|
         [path, File.size(path), File.mtime(path).utc.iso8601, first_prompt(path)]
       end
     end
+
+    # Claude Code names a project's folder after its real path, never a symlink to it.
+    def real(path) = File.exist?(path) ? File.realpath(path) : File.expand_path(path)
 
     def mentions_byox?(path) = File.foreach(path).any? { _1.match?(/byox/i) }
 
