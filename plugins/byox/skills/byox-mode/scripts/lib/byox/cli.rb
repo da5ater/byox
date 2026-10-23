@@ -199,7 +199,7 @@ module Byox
 
     def cmd_visual_diff(args, opts)
       target, actual = args
-      raise ArgumentError, "usage: byox visual-diff TARGET.png ACTUAL.png [--tolerance 0.02] [--out DIFF.png]" unless target && actual
+      raise ArgumentError, "usage: byox visual-diff TARGET.png ACTUAL.png [--tolerance 0.02] [--coarse 8] [--out DIFF.png]" unless target && actual
 
       [target, actual].each { raise ArgumentError, "no such file: #{_1}" unless File.file?(_1) }
       limit = opts[:tolerance] || 0.02
