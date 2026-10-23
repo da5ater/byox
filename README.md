@@ -108,11 +108,13 @@ A project is a folder with two folders in it:
 
 ```
 ~/byox-courses/corsego/
-  course/   the agent's lessons, tests, solution and your progress
-  work/     your own project, with its own git repo
+  course/       the agent's lessons, tests, solution and your progress
+  work/
+    api/        your Rails API, with its own git repo
+    frontend/   your React app, with its own git repo
 ```
 
-`work/` holds only your code, so you can search and edit it freely without course files in the way. `course/` is the agent's, and you never need to open it. Courses made with an older version keep your app in the project folder itself, and byox still runs them. Convert one with `byox migrate <project> --dry-run`, then without the flag.
+`work/` holds only your code, so you can search and edit it freely without course files in the way. A product with one codebase uses `work/` itself. A course with several, like an API and a frontend, decides the folders before the first lesson and names them in every step. `course/` is the agent's, and you never need to open it. Courses made with an older version keep your app in the project folder itself, and byox still runs them. Convert one with `byox migrate <project> --dry-run`, then without the flag. To split `work/` into named projects, add `--projects api,frontend`.
 
 ## Configuration
 

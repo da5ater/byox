@@ -123,4 +123,12 @@ class PluginTest < Minitest::Test
     assert_match(/compile\.md\b.* steps 4 to 9/, add, "add-lessons must follow the renumbered compile steps")
     assert_includes File.read(File.join(PLUGIN, "skills/byox-mode/SKILL.md")), "byox-how"
   end
+
+  # The variables byox hands to verify scripts are part of the contract with course writers.
+  def test_the_course_format_documents_every_variable_a_script_is_given
+    format = File.read(File.join(PLUGIN, "skills/byox-mode/references/course-format.md"))
+    %w[BYOX_COURSE BYOX_WORK BYOX_PROJECT_<NAME> projects:].each { |w| assert_includes format, w, "course-format.md must explain #{w}" }
+    assert_includes File.read(File.join(PLUGIN, "skills/byox-mode/playbooks/compile.md")), "project folders"
+    assert_match(/Name the folder in every instruction/, File.read(File.join(PLUGIN, "agents/lesson-writer.md")))
+  end
 end

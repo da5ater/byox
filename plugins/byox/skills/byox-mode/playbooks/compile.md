@@ -3,6 +3,7 @@
 Shared by every source. Start here after an intake playbook wrote a draft `course/course.md`. `B` below is the absolute path of `scripts/byox` next to `SKILL.md`. `C` is the course dir.
 
 1. **Questions.** Ask only what the user left out, one short question each.
+   - The project folders. How many codebases does the product have? One, or several such as an API and a frontend. Decide this first, before any lesson is written, and write it in `projects:` per `references/course-format.md`. The folder names appear in every step the learner reads.
    - The stack, when the source fixes it. Keep it or port it. Default: port to the current version, such as Rails 8 instead of Rails 6 with Webpacker. Read `references/porting.md` before you answer for them.
    - The test framework. Default: the source's.
    - Per external service: a real account, a free tier or a stub. Stripe, AWS, OAuth and email are the usual ones.

@@ -21,7 +21,37 @@ A project is a folder with two folders in it and nothing else.
   work/                        the learner's own project, with its own git repo. They search it freely.
 ```
 
-`course.md` says `layout: split`. Every step's `verify` runs from `work/`, and scripts reach the course folder through `$BYOX_COURSE`, which byox sets. Never write a relative `course/` path in a script or a `verify` command of a split course.
+`course.md` says `layout: split`. Every step's `verify` runs from the first project in `work/`, and scripts reach the course folder through `$BYOX_COURSE`, which byox sets. Never write a relative `course/` path in a script or a `verify` command of a split course.
+
+### Projects
+
+Decide the project folders before writing any lesson, because they fix where every step runs and what the learner is told to create where. A product with one codebase needs nothing: `work/` is the project. A product with several, such as an API and a frontend, declares them in `course.md`:
+
+```yaml
+projects:
+  - {name: api, description: The Rails API}
+  - {name: frontend, description: The React app}
+```
+
+Each project is a folder in `work/` with its own git repo, made by `byox new`:
+
+```
+work/
+  api/         the first project, where verify runs
+  frontend/
+```
+
+byox gives every verify script these variables, so a script never guesses a path:
+
+| Variable | Holds |
+|---|---|
+| `BYOX_COURSE` | The course folder |
+| `BYOX_WORK` | The work folder |
+| `BYOX_PROJECT_<NAME>` | One project's folder, such as `BYOX_PROJECT_FRONTEND` |
+
+A script runs in the first project. It reaches the others through their variable, as in `cd "$BYOX_PROJECT_FRONTEND"`. Lint rejects a script that names a project the course does not declare.
+
+The solution repo is laid out the same way. By default a project's files live in a folder of the same name in the solution, `api/` and `frontend/`. A project can name another place with `source:`, where `"."` is the solution's root. A course that started as one app and later grew a second project sets `{name: api, source: "."}` for the app, and the other project's `source` is the folder inside it.
 
 A course made before this layout has no `layout` line, which means `inline`. There the learner's app is the project folder itself, `course/` sits inside it, and `verify` runs from the project folder. byox still runs those courses. New courses are always split. To convert an old one, run `byox migrate <project> --dry-run`, read the plan, then run it without the flag.
 

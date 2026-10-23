@@ -46,7 +46,7 @@ Every course file follows `references/course-format.md`. The parser in `scripts/
 Paths:
 
 - Courses root: `byox.yml` sits here. The `--root` flag, else `BYOX_ROOT`, else `~/byox-courses`.
-- A project: `<root>/<project>/`, a folder with two folders. `course/` is the agent's work. `work/` is the learner's own code, with its own git repo, free to search. Courses made earlier keep the app in the project folder itself.
+- A project: `<root>/<project>/`, a folder with two folders. `course/` is the agent's work. `work/` is the learner's own code, free to search. It is one project, or several folders such as `work/api` and `work/frontend`, each with its own git repo. Courses made earlier keep the app in the project folder itself.
 - The vault: `vault:` in `byox.yml`, such as a folder in an Obsidian vault. Default `<root>/vault`. See `references/obsidian-layout.md`.
 
 ## Agent budget
@@ -76,7 +76,7 @@ Two agents per lesson, one `lesson-writer` and then one `lesson-reviewer`, plus 
 | `byox strength COURSE_DIR [--lesson ID] [--step ID]` | Each step's verify must fail at the previous tag and pass at its own. |
 | `byox site [--root DIR] [--port 4917]` | Starts the local site for every compiled course under the root. |
 | `byox sync [--root DIR]` | Regenerates every `Courses/<slug>.md` from state. |
-| `byox migrate PROJECT_DIR [--dry-run]` | Turns an inline course into a split one: the learner's files move into `work/`, and verify commands and scripts use `$BYOX_COURSE`. Test files are never rewritten. Saves backups and an undo log in `course/.cache/`. |
+| `byox migrate PROJECT_DIR [--projects api,frontend] [--dry-run]` | Turns an inline course into a split one, and with `--projects` groups the work into named project folders. Verify commands and scripts use `$BYOX_COURSE` and `$BYOX_PROJECT_<NAME>`. Test files are never rewritten. Saves backups and an undo log in `course/.cache/`. |
 | `byox evidence [--since DATE]` | One digest across every course: struggles, notes, open feedback, lint. Keys are redacted. |
 | `byox transcripts` | This project's Claude Code sessions that used byox. |
 

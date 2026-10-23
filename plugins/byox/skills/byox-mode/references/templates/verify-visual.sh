@@ -3,6 +3,8 @@
 # screenshot against the design target. Copy it to course/verify/<step>.sh and change
 # START_CMD, URL and the paths the step needs. byox sets BYOX_BIN, BYOX_STEP and
 # BYOX_COURSE, the course folder, so the script works from the learner's work/ folder.
+# With several projects, verify runs in the first one. Set APP_DIR to the project the page
+# belongs to, such as "$BYOX_PROJECT_FRONTEND", and START_CMD runs there.
 set -e
 : "${BYOX_BIN:?run this through byox, which sets BYOX_BIN}"
 STEP="${BYOX_STEP:?run this through byox, which sets BYOX_STEP}"
@@ -17,7 +19,7 @@ CACHE="$COURSE/.cache"
 TESTS="$COURSE/tests/$STEP"
 mkdir -p "$CACHE"
 
-sh -c "exec $START_CMD" >"$CACHE/server-$STEP.log" 2>&1 &
+( cd "${APP_DIR:-.}" && exec sh -c "exec $START_CMD" ) >"$CACHE/server-$STEP.log" 2>&1 &
 SERVER=$!
 trap 'kill "$SERVER" 2>/dev/null || true' EXIT
 

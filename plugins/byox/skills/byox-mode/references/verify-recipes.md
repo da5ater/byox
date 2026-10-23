@@ -11,6 +11,8 @@ Every step's `verify` field names one shell command, usually `sh "$BYOX_COURSE/v
 - **Strong.** The tests must fail on the solution at the previous tag and pass at this step's tag. `byox strength` checks it. Only `kind: cloud` steps are exempt.
 - **Readable failure.** The first failing line says what was expected and what came back.
 
+- **Folders by variable.** With several projects, a script runs in the first and reaches the rest through `$BYOX_PROJECT_<NAME>`. Never `cd ../frontend`.
+
 ## By kind
 
 | kind | Recipe |

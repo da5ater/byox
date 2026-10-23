@@ -1,7 +1,7 @@
 {
   "name": "byox",
   "displayName": "byox",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Build Your Own X mode. Turns a transcript, repo or article into a local CodeCrafters-style course you build line by line.",
   "author": {
     "name": "da5ater",

@@ -69,6 +69,22 @@ class TemplatesTest < Minitest::Test
     assert_equal ["site"], Dir.children(File.join(@dir, "work")), "the learner's folder gets no cache files"
   end
 
+  def test_the_visual_template_can_start_the_app_from_another_project_folder
+    skip "needs Chrome and python3" unless Byox::Visual.chrome && system("python3", "--version", out: File::NULL)
+
+    FileUtils.mkdir_p(File.join(@dir, "course/tests/04.1"))
+    FileUtils.mkdir_p(File.join(@dir, "work/api"))
+    FileUtils.mkdir_p(File.join(@dir, "work/frontend"))
+    File.write(File.join(@dir, "work/frontend/index.html"), page("#1b2430"))
+    Byox::Visual.shot("file://#{@dir}/work/frontend/index.html", File.join(@dir, "course/tests/04.1/target.png"), width: 1280, height: 800)
+    port = free_port
+    env = { "BYOX_COURSE" => File.join(@dir, "course"), "APP_DIR" => File.join(@dir, "work/frontend"),
+            "START_CMD" => "python3 -m http.server #{port} --bind 127.0.0.1", "URL" => "http://127.0.0.1:#{port}/" }
+
+    out, status = run_script("verify-visual.sh", env, chdir: File.join(@dir, "work/api"))
+    assert status.success?, "the server started in the frontend folder, not in the folder verify runs in: #{out}"
+  end
+
   def test_the_visual_template_says_so_when_the_app_never_answers
     FileUtils.mkdir_p(File.join(@dir, "course/tests/04.1"))
     out, status = run_script("verify-visual.sh", { "START_CMD" => "sleep 60", "URL" => "http://127.0.0.1:#{free_port}/" })

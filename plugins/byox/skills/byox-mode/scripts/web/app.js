@@ -93,6 +93,13 @@ async function home() {
   };
 }
 
+// Which folder is which, when the work is split into projects such as api and frontend.
+function projectsHtml(projects) {
+  if (!projects || !projects.length) return "";
+  const items = projects.map((p) => `<span><code>${esc(p.folder)}</code>${p.description ? ` ${esc(p.description)}` : ""}</span>`).join("");
+  return `<p class="projects"><span class="eyebrow">Your folders</span>${items}</p>`;
+}
+
 async function courseMap(slug) {
   const c = await api(`/api/courses/${enc(slug)}`);
   rememberCourse(slug);
@@ -107,6 +114,7 @@ async function courseMap(slug) {
   }).join("");
   app.innerHTML = `<p class="eyebrow">Course</p><h1>${esc(c.title)}</h1>
     <p class="muted">${c.progress.done} of ${c.progress.total} steps. Every step is a commit in the mentor's solution.</p>
+    ${projectsHtml(c.projects)}
     <div class="map">${lessons}</div>
     <section class="add-lessons"><h3>Add lessons</h3>
       <p class="muted">Ask the agent for more: the next chapters of your source, a new source, or a feature. It writes each lesson, reviews it, and releases it in order. This course stays usable while it works.</p>
@@ -184,6 +192,7 @@ async function lesson(slug, id) {
   app.innerHTML = `<div class="lesson-page"><aside class="steprail" aria-label="Steps in this lesson"><p class="eyebrow">Steps</p><ol>${rail}</ol></aside><div class="content">
     <div class="row"><span class="badge ${l.status}">${esc(STATUS_LABEL[l.status] || l.status)}</span>${l.track === "ops" ? `<span class="badge">ops</span>` : ""}</div>
     <h1>${esc(l.title)}</h1>
+    ${projectsHtml(l.projects)}
     <h2>Goal</h2><div class="goal">${md(l.goal)}</div>
     <h2>Short read ${unclearButton("short_read")}</h2>${md(l.sections.short_read)}
     <h2>Task ${unclearButton("task")}</h2>${md(l.sections.task)}

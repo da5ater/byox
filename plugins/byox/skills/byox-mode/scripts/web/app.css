@@ -123,6 +123,8 @@ button.link:hover { color: var(--brass); }
 .steprail button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .steprail code { display: block; font-size: 12px; color: var(--muted); background: none; padding: 0; }
 .content { max-width: 720px; min-width: 0; }
+.projects { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline; margin: 4px 0 18px; font-size: 14px; color: var(--muted); }
+.projects .eyebrow { margin: 0; }
 .goal { font-size: 19px; line-height: 1.5; border-left: 3px solid var(--brass); padding-left: 16px; margin: 4px 0 8px; }
 .step { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--rail); border-radius: 10px; padding: 18px 20px; margin: 14px 0; scroll-margin-top: 20px; }
 .step.open { border-left-color: var(--brass); }
