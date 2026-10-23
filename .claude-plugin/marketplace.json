@@ -10,7 +10,7 @@
       "name": "byox",
       "source": "./plugins/byox",
       "description": "Build Your Own X mode. Compiles a source into a local course with tests, hints and a local site.",
-      "version": "0.3.1"
+      "version": "0.4.0"
     }
   ]
 }

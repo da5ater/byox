@@ -26,6 +26,7 @@ byox is **Build Your Own X mode** for [Claude Code](https://code.claude.com). Gi
 - **Ported to today's stack.** A Rails 6 course can become a Rails 8 course. The step tests prove the port behaves the same.
 - **Stuck help that never cheats.** Explain failure runs a coach that cannot read the solution or your unrevealed hints.
 - **A workbench that keeps your place.** Continue where you left off, a light or dark theme that sticks, and an **Add lessons** box that asks the agent for more chapters or a new feature without taking your course offline.
+- **It learns from how you use it.** `/byox-optimize` reads every course across every stack, your notes, open feedback, lint results and your own Claude Code sessions. Two read-only reviewers and a synthesizer turn that into specific edits to byox, and nothing is applied until you approve it.
 - **Progress in Obsidian.** Concept pages, a weakness log and your progress can live in your vault.
 - **Feedback straight to a pull request.** Tell byox what to change, or change it yourself, and the feedback agent opens one pull request with before and after screenshots.
 
@@ -76,6 +77,10 @@ This opens the site at http://127.0.0.1:4917. The loop:
 ### Add more lessons later
 
 Press **Add lessons** on a course page and say what you want: the next chapters of your source, a new source, or a feature. The agent writes each new lesson, has a second agent review it, and releases them in order. Lessons that are still being written show as "being written" and stay locked.
+
+### Improve byox from your own use
+
+After you have worked through some lessons, or after a compile that went badly, run `/byox-optimize`. It gathers the evidence with `byox evidence` and `byox transcripts`, which redact keys and read only this project's sessions. Then a friction reviewer and a pipeline reviewer judge it. A synthesizer checks every citation and returns Accepted, Rejected and Backlog lists. You approve a subset, and byox edits itself on a branch, test first. Backlog items land in the site's Feedback list.
 
 ### What a lesson contains
 

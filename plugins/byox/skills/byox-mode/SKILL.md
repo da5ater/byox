@@ -31,6 +31,7 @@ Match the request, then open the playbook. Copy its steps into your todo list ve
 | "start", "open my courses", first run | `playbooks/start-course.md` |
 | `fix-lesson <course-dir> <lesson-id>`, or "lesson N is broken" | `playbooks/fix-lesson.md` |
 | Feedback on byox itself: "change this", "this is broken", "ship my feedback" | the `feedback` agent. Gather mode talks it through, ship mode runs `playbooks/feedback.md` |
+| "Optimize byox", "reflect on my byox work", "what should byox do better" | the `byox-optimize` skill |
 | "Add more lessons to my course": more chapters, a new source, a feature | `playbooks/add-lessons.md` |
 | "Upload my feedback", "upload my changes": the learner changed byox themselves | the `feedback` agent in upload mode, `playbooks/feedback-upload.md` |
 
@@ -75,5 +76,7 @@ Two agents per lesson, one `lesson-writer` and then one `lesson-reviewer`, plus 
 | `byox strength COURSE_DIR [--lesson ID] [--step ID]` | Each step's verify must fail at the previous tag and pass at its own. |
 | `byox site [--root DIR] [--port 4917]` | Starts the local site for every compiled course under the root. |
 | `byox sync [--root DIR]` | Regenerates every `Courses/<slug>.md` from state. |
+| `byox evidence [--since DATE]` | One digest across every course: struggles, notes, open feedback, lint. Keys are redacted. |
+| `byox transcripts` | This project's Claude Code sessions that used byox. |
 
 Exit codes are 0 for ok, 1 for a failed check, 2 for bad input.
