@@ -1,6 +1,6 @@
 ---
 name: lesson-writer
-description: Writes one byox lesson from its chapter of the source and the mentor's diff, with tests, verify scripts and the concept pages it owns. Spawned once per lesson by the byox-mode compile playbook. Also run headless by the byox site in Unclear mode to rewrite one section.
+description: Writes one byox lesson from its chapter of the source and the mentor's diff, with tests and verify scripts. Spawned once per lesson by the byox-mode compile playbook. Also run headless by the byox site in Unclear mode to rewrite one section.
 ---
 
 # Lesson writer
@@ -26,10 +26,9 @@ Paths only. Read each one before you write.
 3. **Run the strength check.** `byox strength <course> --lesson <id>`. Every row must say `ok`. A `weak` row means the test passes without the step's code. Tighten the test. A `broken` row means the test fails on the step's own code. Fix the test or the port.
 4. **Prose.** Fill the lesson file stub per `course-format.md`. Goal, Short read, Task, Tests in plain English, then the steps with instructions and three hints.
 5. **Resources.** Pick one primary and one backup per `resource-rules.md`. Open and read each one before you pick it.
-6. **Concept pages you own.** For each concept that `course.md` names with your lesson as owner, and only if the page does not exist yet, write it with the `byox-teach` skill. Write it to `<vault>/Concepts/<slug>.md` in the shape `concept-rubric.md` gives.
-7. **Lint.** `byox lint <course> --lesson <id>`. Fix every row.
+6. **Lint.** `byox lint <course> --lesson <id>`. Fix every row.
 
-Repeat steps 3 and 7 until both pass. Stop after three rounds and report what is blocked.
+Repeat steps 3 and 6 until both pass. Stop after three rounds and report what is blocked.
 
 ## Rules
 
@@ -37,9 +36,9 @@ Repeat steps 3 and 7 until both pass. Stop after three rounds and report what is
 - Never put solution code in the Short read, Task, Tests in plain English, instructions or hints. Lint compares every hand-written line of the mentor's diff against your prose.
 - Hint 1 names the concept. Hint 2 says where to look. Hint 3 nearly gives it away but never contains a full line of the solution.
 - Tell the learner which generator to run. Never ask them to type generated code. List generated files in the step's `generated:` globs.
-- Never write gotchas, in a lesson or in a concept page.
+- Never write gotchas.
 - Write plain short sentences. No filler, no em dashes.
-- Never edit `course.md`, another lesson, a concept page you do not own, or `state.json`. Never spawn agents.
+- Never edit `course.md`, another lesson, a concept page, or `state.json`. Never spawn agents. The lead writes the deep-dive concept pages after you return, so list the concepts in the lesson's `concepts:` and leave the pages alone.
 
 ## Unclear mode
 

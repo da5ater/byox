@@ -66,4 +66,61 @@ class PluginTest < Minitest::Test
     writer = File.read(File.join(PLUGIN, "agents/lesson-writer.md"))
     assert_match(/Never write gotchas/, writer)
   end
+
+  # The deep dive is pstack's teach, which runs how and why. They are copied in so the
+  # plugin does not depend on pstack, with only the pstack wiring taken out.
+  DEEP_DIVE = %w[byox-teach byox-how byox-why].freeze
+
+  def test_the_deep_dive_skills_are_internal_copies_with_their_license
+    DEEP_DIVE.each do |name|
+      dir = File.join(PLUGIN, "skills", name)
+      meta = front_matter(File.join(dir, "SKILL.md"))
+      assert_equal name, meta["name"]
+      assert_equal false, meta["user-invocable"], "#{name} is used internally, not typed"
+      assert File.file?(File.join(dir, "LICENSE-pstack")), "#{name} must carry pstack's MIT license"
+      assert_includes File.read(File.join(dir, "SKILL.md")), "Copied from the", "#{name} says where it came from"
+    end
+  end
+
+  def test_teach_runs_how_and_why_and_they_are_present_with_their_references
+    teach = File.read(File.join(PLUGIN, "skills/byox-teach/SKILL.md"))
+    assert_includes teach, "`byox-how`"
+    assert_includes teach, "`byox-why`"
+    %w[how/references/explainer-prompt.md how/references/explorer-prompt.md why/references/epistemics.md why/references/investigator-prompt.md
+       why/references/synthesizer-prompt.md why/references/source-playbook.md why/references/sources/code-archaeology.md].each do |rel|
+      name, rest = rel.split("/", 2)
+      assert File.file?(File.join(PLUGIN, "skills/byox-#{name}", rest)), "byox-#{name} is missing #{rest}"
+    end
+  end
+
+  def test_no_pstack_wiring_is_left_in_the_copies
+    DEEP_DIVE.flat_map { Dir[File.join(PLUGIN, "skills", _1, "**/*.md")] }.each do |f|
+      text = File.read(f)
+      %w[pstack-models poteto-mode].each { |w| refute_includes text, w, "#{f.delete_prefix(PLUGIN)} still names #{w}" }
+      refute_match(/platform mapping/i, text, "#{f.delete_prefix(PLUGIN)} still has the Codex or Copilot note")
+    end
+  end
+
+  def test_every_byox_skill_a_skill_names_exists
+    names = Dir[File.join(PLUGIN, "skills/*")].map { File.basename(_1) }
+    Dir[File.join(PLUGIN, "skills/**/*.md")].each do |f|
+      File.read(f).scan(/`(byox-(?:how|why|teach|optimize|mode))`/).flatten.uniq.each do |n|
+        assert_includes names, n, "#{f.delete_prefix(PLUGIN)} names a skill that does not exist: #{n}"
+      end
+    end
+  end
+
+  # byox-teach runs byox-how and byox-why, which spawn agents. A spawned agent cannot spawn
+  # agents, so the lead session writes deep dives, between a lesson's writer and reviewer.
+  def test_the_lead_writes_deep_dives_and_the_lesson_writer_does_not
+    writer = File.read(File.join(PLUGIN, "agents/lesson-writer.md"))
+    refute_match(/byox-teach|concept page you own|Concept pages you own/i, writer, "the lesson writer must not be told to write deep dives")
+    compile = File.read(File.join(PLUGIN, "skills/byox-mode/playbooks/compile.md"))
+    assert_match(/\*\*Deep dives\.\*\*.*byox-teach.*in this session/m, compile)
+    assert_operator compile.index("**Deep dives.**"), :<, compile.index("**Review.**"), "deep dives come before the reviewer"
+    assert_operator compile.index("**Lint and strength.**"), :<, compile.index("**Deep dives.**")
+    add = File.read(File.join(PLUGIN, "skills/byox-mode/playbooks/add-lessons.md"))
+    assert_match(/compile\.md\b.* steps 4 to 9/, add, "add-lessons must follow the renumbered compile steps")
+    assert_includes File.read(File.join(PLUGIN, "skills/byox-mode/SKILL.md")), "byox-how"
+  end
 end

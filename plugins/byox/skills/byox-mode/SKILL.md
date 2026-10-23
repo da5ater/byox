@@ -51,7 +51,7 @@ Paths:
 
 ## Agent budget
 
-Two agents per lesson, one `lesson-writer` and then one `lesson-reviewer`, plus one `course-auditor` per course. The reviewer never wrote the lesson it reviews. Nothing else spawns agents, and agents spawn none. Fixes after the audit happen in your own session. At runtime the site runs the `coach`, and the `lesson-writer` or `fix-lesson` headless, one job per course at a time.
+Two agents per lesson, one `lesson-writer` and then one `lesson-reviewer`, plus one `course-auditor` per course. The reviewer never wrote the lesson it reviews. Deep dives are the exception, because `byox-teach` runs `byox-how` and `byox-why` from your own session. Per concept page, `byox-how` spawns one explainer, or two to four explorers and an explainer, and `byox-why` spawns one investigator per available evidence source and a synthesizer. Writers and reviewers spawn none. Fixes after the audit happen in your own session. At runtime the site runs the `coach`, and the `lesson-writer` or `fix-lesson` headless, one job per course at a time.
 
 ## Who writes what
 
@@ -59,7 +59,7 @@ Two agents per lesson, one `lesson-writer` and then one `lesson-reviewer`, plus 
 |---|---|
 | `course/course.md` | You, the lead |
 | `course/lessons/<id>.md`, `course/tests/<step>/`, `course/verify/<step>.sh` | That lesson's writer. Later, `fix-lesson` or Unclear. |
-| `<vault>/Concepts/<slug>.md` | The writer of the owner lesson named in `course.md`, then that lesson's reviewer. Later, Unclear. |
+| `<vault>/Concepts/<slug>.md` | You, the lead, with `byox-teach` after the owner lesson's writer returns. Then that lesson's reviewer. Later, Unclear. |
 | `course/solution/` | `byox new` and `byox tag`, called by you or by the writer in port mode |
 | `course/state.json`, `<vault>/Courses/<slug>.md`, `<vault>/resource-blocklist.md` | The site only. `byox sync` regenerates the course notes. |
 | `course/audit.md` | The course auditor |

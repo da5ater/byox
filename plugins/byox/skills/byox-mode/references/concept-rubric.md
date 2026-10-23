@@ -1,6 +1,6 @@
 # Concept rubric
 
-Concept pages are the Go deep links. There is one global library in `<vault>/Concepts/`, shared by every course, so a concept like authorization is written once. The owner lesson's writer creates a page with the `byox-teach` skill. The owner lesson's reviewer checks it against this rubric.
+Concept pages are the Go deep links. There is one global library in `<vault>/Concepts/`, shared by every course, so a concept like authorization is written once. The lead creates a page with the `byox-teach` skill after the owner lesson's writer returns. The owner lesson's reviewer checks it against this rubric.
 
 ## Shape
 
