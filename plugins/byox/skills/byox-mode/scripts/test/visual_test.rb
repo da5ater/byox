@@ -125,6 +125,14 @@ class VisualSiteTest < Minitest::Test
     Fixture.edit_lesson(@root, "01-ping") { |t| t.sub(/(- id: ["']?#{Regexp.escape(step)}["']?\n\s*title: [^\n]*\n\s*kind: )\w+/) { "#{$1}#{kind}" } }
   end
 
+  def test_a_ui_step_shows_a_design_image_when_it_has_one
+    set_kind("01.1", "ui")
+    FileUtils.mkdir_p(File.join(@app_dir, "course/tests/01.1"))
+    File.binwrite(File.join(@app_dir, "course/tests/01.1/target.png"), Byox::Png.encode([[[0, 0, 0, 255]]]))
+    _, body = json(:get, api("/lessons/01-ping"))
+    assert_equal api("/files/course/tests/01.1/target.png"), body["steps"][0]["design"]
+  end
+
   def test_a_visual_step_shows_its_target_and_the_last_diff
     set_kind("01.1", "visual")
     _, body = json(:get, api("/lessons/01-ping"))
