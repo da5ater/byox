@@ -79,6 +79,10 @@ stack:
   target: Rails 8.1, importmap, Bootstrap 5, HAML
   ported: true
   test: rspec
+  choices:                        # from the stack wizard, required once approved
+    language: ruby
+    architecture: one program
+    design: none                  # penpot-diff | penpot | html | none
 services:
   - {name: Stripe, mode: sandbox}  # real | free_tier | sandbox | stub
 lessons:                          # list order is unlock order
@@ -168,6 +172,7 @@ The precise spec, as a short list.
 - `generators` lists commands like `bin/rails generate devise:install`. `generated` lists globs of the files they write, such as `db/migrate/*_devise_create_users.rb` or `test/**`. The solution view collapses those files, and the leak check ignores them.
 - Do not write gotchas. They did not help the learner. A course compiled earlier keeps its `gotchas` field, and the site still shows it.
 - `design_url` is optional. On a `visual` step, an https link to the design, such as a Penpot view link. The lesson page shows it as a button.
+- `design_exempt` is optional. One sentence on why a `ui` or `visual` step has no design, such as a step that only creates the project. With `stack.choices.design` other than `none`, lint requires `design_url` or this.
 - `fixed_values` is optional. Set it to one sentence when the expected answer is fixed by the task and cannot be randomized, such as an app's module name or the root route. Lint then skips its random-values check for that step. An empty reason does not count.
 - Tests in plain English has one `**<step id>.**` paragraph per step. Say exactly what the check sends and what it expects, including which values are random.
 

@@ -23,7 +23,7 @@ module Byox
     def lint(course, config, lesson: nil, offline: false)
       ids = lesson ? [lesson] : course.outline.map(&:id)
       findings = ids.flat_map { lint_lesson(course, config, _1, offline:) }
-      findings += outline_matches_files(course) + project_findings(course) unless lesson
+      findings += outline_matches_files(course) + project_findings(course) + stack_findings(course) unless lesson
       findings
     end
 
@@ -34,9 +34,37 @@ module Byox
       l = Lesson.parse(path)
       [*outline_matches_lesson(course, l), *tests_exist(course, l), *random_values_in_tests(course, l),
        *hint3_no_solution(course, l), *no_solution_leak(course, l), *resources(config, l),
-       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l)]
+       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l)]
     rescue FormatError => e
       e.problems.map { |check, msg| Finding.new(check, id, msg) }
+    end
+
+    CHOICE_KEYS = %w[language architecture design].freeze
+    DESIGNS = %w[penpot-diff penpot html none].freeze
+
+    # The compile wizard settles these before any lesson is written.
+    def stack_findings(course)
+      return [] unless %w[approved compiled].include?(course.status)
+
+      choices = course.meta.dig("stack", "choices")
+      return [Finding.new(:stack, "course.md", "stack.choices is missing: run the stack wizard (references/stack-wizard.md)")] unless choices.is_a?(Hash)
+
+      out = (CHOICE_KEYS - choices.keys).map { Finding.new(:stack, "course.md", "stack.choices.#{_1} is missing") }
+      design = choices["design"].to_s
+      out << Finding.new(:stack, "course.md", "stack.choices.design #{design} must be one of #{DESIGNS.join(', ')}") unless design.empty? || DESIGNS.include?(design)
+      out
+    end
+
+    # With designs on, a UI step hands the learner a design to replicate.
+    def design_canvas(course, lesson)
+      design = course.meta.dig("stack", "choices", "design").to_s
+      return [] if design.empty? || design == "none"
+
+      lesson.steps.filter_map do |s|
+        next unless %w[ui visual].include?(s.kind) && s.design_url.nil? && s.design_exempt.empty?
+
+        Finding.new(:design_canvas, s.id, "#{s.id} is a #{s.kind} step with no design_url. Design it (references/frontend-design.md) or set design_exempt with the reason")
+      end
     end
 
     PROJECT_NAME = /\A[a-z][a-z0-9_-]*\z/

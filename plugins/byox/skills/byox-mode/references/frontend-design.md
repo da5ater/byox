@@ -1,6 +1,6 @@
 # Frontend steps
 
-A frontend step is a design handoff, like a ticket at a company. The learner gets a design and builds it by hand. The check is a screenshot compared to the design. No paid design tool is needed.
+When `stack.choices.design` is anything but `none`, every `ui` or `visual` step has one: a design in the learner's canvas (Penpot) that they replicate, and lint rejects a step that has neither `design_url` nor `design_exempt`. A frontend step is a design handoff, like a ticket at a company. The learner gets a design and builds it by hand. The check is a screenshot compared to the design. No paid design tool is needed.
 
 ## Where the design comes from
 

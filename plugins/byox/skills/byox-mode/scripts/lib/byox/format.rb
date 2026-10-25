@@ -21,7 +21,7 @@ module Byox
 
   Resource = Data.define(:url, :section, :why)
 
-  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values, :design_url) do
+  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values, :design_url, :design_exempt) do
     def tag = "step-#{id}"
     def tests_dir = "course/tests/#{id}"
   end
@@ -174,7 +174,8 @@ module Byox
       Step.new(id:, title: raw["title"].to_s, kind: raw["kind"].to_s, verify: raw["verify"].to_s,
                generators: Array(raw["generators"]).map(&:to_s), generated: Array(raw["generated"]).map(&:to_s),
                instructions: raw["instructions"].to_s, gotchas: raw["gotchas"].to_s, hints:,
-               fixed_values: raw["fixed_values"].to_s.strip, design_url: (design_url.empty? ? nil : design_url))
+               fixed_values: raw["fixed_values"].to_s.strip, design_url: (design_url.empty? ? nil : design_url),
+               design_exempt: raw["design_exempt"].to_s.strip)
     end
 
     def generated?(path, globs)

@@ -128,6 +128,10 @@ module MiniRedis
       target: Ruby 3.4
       ported: false
       test: minitest
+      choices:
+        language: ruby
+        architecture: one program
+        design: none
     services: []
     lessons:
       - id: 01-ping
