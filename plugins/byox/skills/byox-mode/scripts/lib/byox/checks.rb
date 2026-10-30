@@ -34,7 +34,7 @@ module Byox
       l = Lesson.parse(path)
       [*outline_matches_lesson(course, l), *tests_exist(course, l), *random_values_in_tests(course, l),
        *hint3_no_solution(course, l), *no_solution_leak(course, l), *resources(config, l),
-       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l), *step_size(l)]
+       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l), *step_size(l), *short_read_size(l), *item_size(l)]
     rescue FormatError => e
       e.problems.map { |check, msg| Finding.new(check, id, msg) }
     end
@@ -62,6 +62,31 @@ module Byox
         out << Finding.new(:audit, cells[2], "audit row #{cells[0]} (#{cells[2]}) is still open: fix it, then mark it fixed or wontfix: <reason>")
       end
       out
+    end
+
+    MAX_SHORT_READ_WORDS = 200
+    MAX_ITEM_WORDS = 40
+
+    # The Short read is a brief a learner finishes in a minute. Code blocks are not prose.
+    def short_read_size(lesson)
+      count = lesson.sections[:short_read].gsub(/```.*?```/m, " ").split.size
+      return [] if count <= MAX_SHORT_READ_WORDS
+
+      [Finding.new(:short_read_size, lesson.id, "#{lesson.id} Short read has #{count} words, the limit is #{MAX_SHORT_READ_WORDS}: cut it to the two or three ideas this lesson needs")]
+    end
+
+    # One numbered instruction is one action. A long one hides several.
+    def item_size(lesson)
+      lesson.steps.flat_map do |s|
+        items = s.instructions.split(/^\s*(?=\d+\. )/).reject { _1.strip.empty? }
+        items.filter_map do |item|
+          n = item[/\A\d+/]
+          count = item.gsub(/```.*?```/m, " ").split.size
+          next unless n && count > MAX_ITEM_WORDS
+
+          Finding.new(:item_size, s.id, "#{s.id} item #{n} has #{count} words, the limit is #{MAX_ITEM_WORDS}: split it into one action per item")
+        end
+      end
     end
 
     MAX_STEP_ITEMS = 10
