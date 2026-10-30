@@ -23,7 +23,7 @@ module Byox
     def lint(course, config, lesson: nil, offline: false)
       ids = lesson ? [lesson] : course.outline.reject(&:building).map(&:id)
       findings = ids.flat_map { lint_lesson(course, config, _1, offline:) }
-      findings += outline_matches_files(course) + project_findings(course) + stack_findings(course) unless lesson
+      findings += outline_matches_files(course) + project_findings(course) + stack_findings(course) + audit_findings(course) unless lesson
       findings
     end
 
@@ -37,6 +37,31 @@ module Byox
        *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l), *step_size(l)]
     rescue FormatError => e
       e.problems.map { |check, msg| Finding.new(check, id, msg) }
+    end
+
+    # course/audit.md names the lessons it covered on a `lessons:` line, and every table row
+    # ends in a status: open, fixed or wontfix: <reason>.
+    def audit_findings(course)
+      path = File.join(course.course_dir, "audit.md")
+      return [] unless course.status == "compiled" && File.file?(path)
+
+      text = File.read(path)
+      out = []
+      scope = text[/^lessons:\s*(.+)$/, 1]
+      released = course.outline.reject(&:building).map(&:id)
+      if scope.nil?
+        out << Finding.new(:audit, "audit.md", "audit.md has no `lessons:` line naming the lessons it covered")
+      else
+        covered = scope.split(",").map(&:strip)
+        (released - covered).each { out << Finding.new(:audit, _1, "released lesson #{_1} is not covered by the audit: rerun the course-auditor") }
+      end
+      text.each_line do |line|
+        cells = line.split("|").map(&:strip)[1..-2]
+        next unless cells && cells.size >= 6 && cells.last.casecmp?("open")
+
+        out << Finding.new(:audit, cells[2], "audit row #{cells[0]} (#{cells[2]}) is still open: fix it, then mark it fixed or wontfix: <reason>")
+      end
+      out
     end
 
     MAX_STEP_ITEMS = 10

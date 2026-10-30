@@ -11,4 +11,5 @@ The course stays usable the whole time. New lessons are marked `building: true` 
 5. **Scaffold.** `B new C`. It is safe to rerun and never overwrites an existing lesson. It adds stubs for the new ones.
 6. **Write and review, two agents per lesson.** Follow `compile.md` steps 4 to 9 for the new lessons only, one `lesson-writer` and then one independent `lesson-reviewer` each, in lesson order. Existing lessons and their solution tags stay as they are. The first new step starts from the course's last tag.
 7. **Release.** When a lesson's writer and reviewer are both done and `B lint C --lesson <id>`, `B strength C --lesson <id>` and `B strength C --lesson <id> --regress` are clean, remove `building: true` from that lesson in `course.md`. Release them in order. A lesson that is blocked keeps `building: true`, and so do all after it.
-8. **Report.** Which lessons were added and released, which are still building and why, and anything the learner must decide. Run `B sync`.
+8. **Audit.** After the last new lesson is released, spawn one `course-auditor` on the whole course, as `compile.md` step 10 says, and fix its rows. Lint reports a released lesson the audit does not cover, and any row still open.
+9. **Report.** Which lessons were added and released, which are still building and why, and anything the learner must decide. Run `B sync`.

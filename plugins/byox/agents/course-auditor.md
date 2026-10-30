@@ -26,7 +26,7 @@ You check a whole course against its source before the learner sees it. You chan
 
 ## Write
 
-`course/audit.md`. One finding per row: where (lesson or step id), what is wrong, and the suggested fix. No prose around the table.
+`course/audit.md`. The first line is `lessons:` and the ids of every lesson you audited, comma separated. Audit every lesson not marked `building`, never a subset. Then one table with the columns `#`, `check`, `where`, `what is wrong`, `suggested fix` and `status`. One finding per row: where (lesson or step id), what is wrong, and the suggested fix. Write `open` in every status cell. The compile lead changes it to `fixed` or `wontfix: <reason>` when the row is dealt with, and `byox lint` reports a compiled course that still has an `open` row. No prose around the table.
 
 ## Return
 
