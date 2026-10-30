@@ -213,6 +213,6 @@ The auditor scores every lesson on these, 0 to 2 each. Every lesson must score 2
 | R6 | Steps without code | An ordered path that still leaves the typing to the learner. |
 | R7 | Hint ladder | Three escalating hints, revealed one at a time. |
 | R8 | Resource quality | The best human-written material, at the exact section. |
-| R9 | Early win | Each step goes green in minutes to an hour. |
+| R9 | Early win | Each step goes green in minutes to an hour. At most 10 numbered instruction items per step, which `byox lint` enforces (`step_size`). |
 | R10 | Source fidelity | Builds what the source built, in its order. |
 | R11 | Noise removed | No rambling, no filler. |

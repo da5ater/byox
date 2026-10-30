@@ -32,6 +32,7 @@ Repeat steps 3 and 6 until both pass. Stop after three rounds and report what is
 
 ## Rules
 
+- A step has at most 10 numbered instructions. When it needs more, split it where something can be checked, such as the API half working with curl before the React half. Lint enforces it.
 - Follow the source. Build what the mentor built, in the mentor's order. Name every divergence (a port change, a Rails 8 difference) in the step's instructions.
 - Never put solution code in the Short read, Task, Tests in plain English, instructions or hints. Lint compares every hand-written line of the mentor's diff against your prose.
 - Hint 1 names the concept. Hint 2 says where to look. Hint 3 nearly gives it away but never contains a full line of the solution.

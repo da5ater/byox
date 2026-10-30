@@ -34,9 +34,21 @@ module Byox
       l = Lesson.parse(path)
       [*outline_matches_lesson(course, l), *tests_exist(course, l), *random_values_in_tests(course, l),
        *hint3_no_solution(course, l), *no_solution_leak(course, l), *resources(config, l),
-       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l)]
+       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l), *step_size(l)]
     rescue FormatError => e
       e.problems.map { |check, msg| Finding.new(check, id, msg) }
+    end
+
+    MAX_STEP_ITEMS = 10
+
+    # More numbered instructions than this is a wall. Split where something can be checked.
+    def step_size(lesson)
+      lesson.steps.filter_map do |s|
+        count = s.instructions.scan(/^\s*\d+\. /).size
+        next unless count > MAX_STEP_ITEMS
+
+        Finding.new(:step_size, s.id, "#{s.id} has #{count} numbered instructions, the limit is #{MAX_STEP_ITEMS}: split it at a checkpoint or into two steps")
+      end
     end
 
     CHOICE_KEYS = %w[language architecture design].freeze
