@@ -84,7 +84,7 @@ module Byox
     end
 
     def stubs(course, lesson)
-      (lesson ? [lesson] : course.outline.map(&:id)).filter_map do |id|
+      (lesson ? [lesson] : course.outline.reject(&:building).map(&:id)).filter_map do |id|
         path = course.lesson_path(id)
         Finding.new(:sections_present, id, "lesson is still a stub") if File.exist?(path) && File.read(path).include?(STUB)
       end

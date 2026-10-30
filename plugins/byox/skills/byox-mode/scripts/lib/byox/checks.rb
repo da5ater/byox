@@ -21,7 +21,7 @@ module Byox
     LINK = %r{\]\((https?://[^)\s]+)\)}
 
     def lint(course, config, lesson: nil, offline: false)
-      ids = lesson ? [lesson] : course.outline.map(&:id)
+      ids = lesson ? [lesson] : course.outline.reject(&:building).map(&:id)
       findings = ids.flat_map { lint_lesson(course, config, _1, offline:) }
       findings += outline_matches_files(course) + project_findings(course) + stack_findings(course) unless lesson
       findings
