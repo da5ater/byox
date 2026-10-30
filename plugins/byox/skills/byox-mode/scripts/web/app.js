@@ -247,7 +247,7 @@ async function helpWay(ctx, stepId, way) {
     const res = await stream(`/api/courses/${enc(ctx.slug)}/steps/${enc(stepId)}/help/${way}`, { selection: h.selection, messages: h.messages, gaps: h.gaps },
       (line) => { if (way === "easy") { h.live += line; renderHelp(stepId); } });
     if (res?.error) h.messages.push({ role: "coach", text: res.error });
-    else { h.messages.push({ role: "coach", text: way === "hard" ? "Added under the step, in Help for you." : "Your tutorial is under the step, in Help for you." }); h.gaps = []; }
+    else { h.messages.push({ role: "coach", text: way === "hard" ? "Added under the step, in Help for you." : "Your tutorial is under the step, in Help for you." }); }
   } catch (e) {
     h.messages.push({ role: "coach", text: e.message });
   }
