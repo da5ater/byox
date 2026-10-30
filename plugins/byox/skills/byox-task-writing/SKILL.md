@@ -20,11 +20,11 @@ Short. It lists each step with its id and one line of what is true when it is do
 Modeled on how GreatFrontEnd writes a question, because it is deterministic: the learner can tell at every line whether they are done. A step reads like this, in this order, with a blank line between parts:
 
 1. **The goal, one sentence.** "Build the `Navbar` component: a labeled navigation bar with the brand, two links and a search box." Verb first, one thing.
-2. **Setup.** Only when there is something to run or install: numbered items, one command each, each in its own code block, with the folder named (`work/frontend`). Skip it when there is nothing.
-3. **Requirements.** Three to seven bullets, each one observable behavior, each one line. Written as what is true, not what to type. "The brand link says Corsego and goes to `/`." "Submitting the search form does nothing yet." No bullet says how to code it. These are what the step's check looks at, so a learner can tick them off.
-4. **Example.** What done looks like: the design image or Penpot board, or the exact terminal session with its output. When a design exists, say which numbers to read from it.
-5. **Notes.** One or two bullets of scope, as GreatFrontEnd does: what to ignore ("styling is not checked here, match the design after the tests pass") and what you may change ("you may rename the props"). Also the one trap worth a line, and any divergence from the mentor.
-6. **Starter.** What already exists that they build on, by file name ("`src/App.tsx` already renders `<Navbar />`"). A learner never starts from a blank page when the step needs a hook to hang on.
+2. **Requirements.** Three to seven bullets, each one observable behavior, each one line. Written as what is true, not what to type. "The brand link says Corsego and goes to `/`." "Submitting the search form does nothing yet." No bullet says how to code it. These are what the step's check looks at, so a learner can tick them off.
+3. **Example.** What done looks like: the design image or Penpot board, or the exact terminal session with its output. When a design exists, say which numbers to read from it.
+4. **Notes.** One or two bullets of scope, as GreatFrontEnd does: what to ignore ("styling is not checked here, match the design after the tests pass") and what you may change ("you may rename the props"). Also the one trap worth a line, and any divergence from the mentor.
+5. **Starter.** What already exists that they build on, by file name ("`src/App.tsx` already renders `<Navbar />`"). A learner never starts from a blank page when the step needs a hook to hang on.
+6. **Setup.** Last, because it is the part you follow with the other parts open beside it. Only when there is something to run or install: numbered items, one command each, each in its own code block, with the folder named (`work/frontend`). Skip it when there is nothing.
 7. **Read first** is not prose. It is the step's `read_first` field. See `byox-read-first`.
 
 The old numbered recipe, twelve items long, is gone. Setup keeps numbers because commands run in order. Everything else is bullets about behavior, so there is no wall to climb and nothing hidden in the middle of a sentence.

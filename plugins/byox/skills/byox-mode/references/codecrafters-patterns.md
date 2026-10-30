@@ -45,4 +45,4 @@ Read from its free "Accordion in React" question. Different product, same lesson
 - **Starter files** with the example content already in them, so nobody starts from nothing.
 - Difficulty and a recommended duration, shown up front.
 
-byox steps follow this: goal sentence, Setup (commands only), Requirements (behavior bullets), Example (design image or terminal output), Notes, Starter.
+byox steps follow this: goal sentence, Requirements (behavior bullets), Example (design image or terminal output), Notes, Starter, then Setup (the commands, numbered).
