@@ -142,7 +142,7 @@ class PluginTest < Minitest::Test
     base = File.join(PLUGIN, "skills/byox-mode")
     assert_includes File.read(File.join(base, "playbooks/compile.md")), "references/stack-wizard.md"
     wizard = File.read(File.join(base, "references/stack-wizard.md"))
-    %w[language architecture design penpot-diff AskUserQuestion].each { assert_includes wizard, _1 }
+    %w[language architecture design penpot-diff AskUserQuestion http_client].each { assert_includes wizard, _1 }
   end
 
   def test_the_course_format_documents_every_variable_a_script_is_given

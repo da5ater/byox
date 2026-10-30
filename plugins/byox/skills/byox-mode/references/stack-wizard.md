@@ -13,7 +13,7 @@ Run this at the very start of a compile, before the outline and before any lesso
 1. **Framework and build tool.** React with Vite, Next.js, Vue, Svelte.
 2. **Styling.** Tailwind, CSS modules, plain CSS.
 3. **UI kit.** shadcn/ui on Radix, shadcn/ui on Base UI, MUI, none. Name the init choices in the lesson that installs it: base color, CSS variables, components folder.
-4. **Routing and data.** React Router or the framework's own, TanStack Query or plain fetch.
+4. **Routing and data.** React Router or the framework's own. The HTTP client: `fetch`, axios or TanStack Query. Record it as `http_client`, and write the course's tests so they pass whichever client the learner picks, by faking the network below the client, never one client's function.
 
 ## Batch 3: backend, when a project has one
 
