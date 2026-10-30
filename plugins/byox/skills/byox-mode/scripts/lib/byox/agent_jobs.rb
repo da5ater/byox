@@ -8,22 +8,56 @@ module Byox
 
   AgentJob = Data.define(:kind, :system_file, :allowed, :disallowed, :workdir, :prompt, :after)
 
+  # Read deny rules also cover Grep and Glob. The learner's helpers never see the solution or the mentor's source.
+  WALL_OFF = lambda { |j, tools|
+    walls = %w[solution source].map { "Read(/#{File.join(j.course.course_dir, _1)}/**)" }
+    [tools, *walls].join(",")
+  }
+
   AGENT_JOBS = {
     # The coach runs in a throwaway dir holding only the lesson, the failure, the
     # learner's diff and concept pages. Headless Read still accepts absolute paths,
     # so Read deny rules (which also cover Grep and Glob) wall off the solution and the mentor's source.
     explain: AgentJob.new(
       kind: :explain, system_file: "agents/coach.md", allowed: "Read,Glob,Grep",
-      disallowed: lambda { |j|
-        walls = %w[solution source].map { "Read(/#{File.join(j.course.course_dir, _1)}/**)" }
-        ["Bash,Edit,Write,WebFetch,WebSearch", *walls].join(",")
-      },
+      disallowed: ->(j) { WALL_OFF.call(j, "Bash,Edit,Write,WebFetch,WebSearch") },
       workdir: :context,
       prompt: lambda { |j|
         "Step #{j.step.id} (#{j.step.title}) failed its verify. In this directory: lesson.md, " \
           "failure.txt, learner.diff and concepts/. Explain the failure as the coach."
       },
       after: nil
+    ),
+    # "I need help with this": the agent interviews the learner, one question at a time, then names what they are missing.
+    help_interview: AgentJob.new(
+      kind: :help_interview, system_file: "agents/helper.md", allowed: "Read,Glob,Grep",
+      disallowed: ->(j) { WALL_OFF.call(j, "Bash,Edit,Write,WebFetch,WebSearch") }, workdir: :context,
+      prompt: lambda { |j|
+        "Interview mode. Step #{j.step.id} (#{j.step.title}). In this directory: lesson.md, failure.txt, learner.diff and " \
+          "concepts/.\nThe learner highlighted this text of the step:\n#{j.section}\n\nThe conversation so far:\n#{j.note}"
+      },
+      after: :help_reply
+    ),
+    # The hard way: the agent searches the web for human-written resources, one per gap plus one big tutorial.
+    help_hard: AgentJob.new(
+      kind: :help_hard, system_file: "agents/helper.md", allowed: "Read,Glob,Grep,WebSearch,WebFetch",
+      disallowed: ->(j) { WALL_OFF.call(j, "Bash,Edit,Write") }, workdir: :context,
+      prompt: lambda { |j|
+        "Resource mode. Step #{j.step.id} (#{j.step.title}). In this directory: lesson.md, failure.txt, learner.diff and " \
+          "concepts/. Follow #{File.join(PLUGIN_DIR, 'skills/byox-mode/references/resource-rules.md')} and skip every URL listed in " \
+          "#{j.config.blocklist_path}.\nThe learner highlighted:\n#{j.section}\n\nWhat they told you and the diagnosis:\n#{j.note}"
+      },
+      after: :help_save_resources
+    ),
+    # The easy way: the byox-teach rules, writing one tutorial for this step's gaps. The page is printed, then saved by byox.
+    help_easy: AgentJob.new(
+      kind: :help_easy, system_file: "skills/byox-teach/SKILL.md", allowed: "Read,Glob,Grep",
+      disallowed: ->(j) { WALL_OFF.call(j, "Bash,Edit,Write,WebFetch,WebSearch") }, workdir: :context,
+      prompt: lambda { |j|
+        "Step help mode. Step #{j.step.id} (#{j.step.title}). In this directory: lesson.md, failure.txt, learner.diff and " \
+          "concepts/. Write the tutorial for this learner.\nThe learner highlighted:\n#{j.section}\n\nWhat they told you and the diagnosis:\n#{j.note}"
+      },
+      after: :help_save_tutorial
     ),
     # Rewrites one section of one lesson. The lesson is restored if lint fails afterwards.
     unclear: AgentJob.new(
@@ -112,9 +146,10 @@ module Byox
                 course: -> { input.course.dir }, plugin_repo: -> { input.config.plugin_repo || FileUtils.mkdir_p(File.join(input.config.root, ".byox")).first } }.fetch(job.workdir).call
         snapshot = input.target && File.read(input.target)
         env = { "BYOX_JOB" => kind.to_s, "BYOX_TARGET" => input.target, "BYOX_COURSE" => input.course&.dir }.compact
-        code = Shell.stream(command(job, input), cwd:, env:, timeout: 900) { emit.call("line", { "text" => _1 }) }
+        output = +""
+        code = Shell.stream(command(job, input), cwd:, env:, timeout: 900) { output << _1; emit.call("line", { "text" => _1 }) }
         result = { "exit" => code }
-        job.after ? result.merge(send(job.after, input, snapshot, &emit)) : result
+        job.after ? result.merge(send(job.after, input, snapshot, output, &emit)) : result
       end
     end
 
@@ -158,7 +193,29 @@ module Byox
       [diff, *added].join("\n")
     end
 
-    def lint_or_restore(input, snapshot)
+    def help_reply(_input, _snapshot, output)
+      reply = Help.last_json(output)
+      reply ? { "reply" => reply } : { "error" => "the helper gave no answer" }
+    end
+
+    def help_save_resources(input, _snapshot, output)
+      found = Help.last_json(output)
+      items = Help.clean_resources(found && found["items"], input.config.blocklist)
+      return { "error" => "no usable resources came back" } if items.empty?
+
+      Help.add(input.course, input.step.id, items)
+      { "saved" => items.size }
+    end
+
+    def help_save_tutorial(input, _snapshot, output)
+      page = Help.tutorial(output)
+      return { "error" => "the tutorial came back malformed" } unless page
+
+      Help.add(input.course, input.step.id, [page])
+      { "saved" => 1 }
+    end
+
+    def lint_or_restore(input, snapshot, _output)
       findings = Checks.lint(input.course, input.config, lesson: input.lesson.id, offline: true)
       return { "restored" => false } if findings.empty?
 
@@ -168,7 +225,7 @@ module Byox
       { "restored" => true, "findings" => findings.map(&:to_s) }
     end
 
-    def concept_or_restore(input, snapshot)
+    def concept_or_restore(input, snapshot, _output)
       missing = begin
         Concept.parse(input.target).missing_headings
       rescue FormatError => e
@@ -181,7 +238,7 @@ module Byox
       { "restored" => true, "findings" => missing }
     end
 
-    def lint_and_strength(input, _snapshot)
+    def lint_and_strength(input, _snapshot, _output)
       findings = Checks.lint(input.course, input.config, lesson: input.lesson.id, offline: true)
       rows = Checks.strength(input.course, lesson: input.lesson.id)
       (findings + rows).each { yield "line", { "text" => "#{_1}\n" } }

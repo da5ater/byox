@@ -25,3 +25,17 @@ Write every response in plain spoken English, the way you'd explain it to a coll
 ## Unclear mode
 
 The byox site runs this skill headless when the learner presses Unclear on a concept page. The prompt names one section and the learner's note. Rewrite only that section, in place, and answer the note. Do not run `byox-how` or `byox-why` here. Keep every heading. The site restores the page if a heading goes missing.
+
+## Step help mode
+
+The byox site runs this skill headless when the learner highlights part of a step and chooses the easy way. The prompt gives the step, the highlighted text, what the learner said and the gaps a diagnosis found. The working directory holds `lesson.md`, `failure.txt`, `learner.diff` and `concepts/`. The mentor's solution is not there.
+
+Write one tutorial that teaches exactly those gaps, so the learner can build the step themselves afterwards. Use every writing rule above. Do not run `byox-how` or `byox-why`. Skip what `learner.diff` shows they already did.
+
+1. Teach by building something similar to the step, not the step. Pick a small example from another domain and build it in front of them, one idea at a time, so each gap is covered by a part of that example. Never write the step's solution or a line of the mentor's diff. The learner writes the step.
+2. Give each gap its own heading, named after the gap. Start each with a plain definition, then show it working.
+3. Build diagrams up one part at a time, as above.
+4. End with a short "Back in your step" section that names which part of the example to look at for each part of the step, without writing the step's code.
+
+Output: print the page, nothing else. The first line is `TITLE: ` and a plain title. The rest is the Markdown body. Write no files. The site saves the page under the step.
+

@@ -18,6 +18,10 @@ module Fixture
     when "break" then File.write(target, "not a lesson")
     when "rewrite" then File.write(target, File.read(target).sub("Redis is a server", "Redis is a database server").sub("A loop reads", "A loop waits for and reads"))
     when "sleep" then sleep 1.5
+    when "help_ask" then puts 'BYOX_JSON {"type":"ask","question":"Have you used a loop before?"}'
+    when "help_diagnosis" then puts 'BYOX_JSON {"type":"diagnosis","summary":"You lack the loop.","gaps":[{"id":"g1","gap":"reading in a loop","detail":"never read until EOF"}]}'
+    when "help_hard" then puts 'BYOX_JSON {"items":[{"kind":"tutorial","title":"Build a chat server","url":"https://example.com/chat","section":"all","why":"end to end"},{"kind":"gap","gap":"reading in a loop","title":"Sockets","url":"https://example.com/sockets","section":"2","why":"covers the loop"},{"kind":"gap","gap":"x","title":"Bad","url":"javascript:alert(1)","section":"","why":"no"}]}'
+    when "help_easy" then puts "TITLE: Loops by building a counter\n" + ("A loop repeats work until a condition stops it. " * 10)
     end
   RUBY
 

@@ -170,9 +170,128 @@ function stepHtml(s) {
     ${readFirstHtml(s)}${md(s.instructions)}${gens}${designHtml(s)}
     ${s.gotchas ? `<p><strong>Gotchas.</strong></p>${md(s.gotchas)}` : ""}
     ${hints}
+    <div class="helplist" id="helplist-${esc(s.id)}">${helpListHtml(s.help)}</div>
     <div class="row"><button class="primary" data-verify="${esc(s.id)}">Verify</button>${more}${explain}</div>
+    <div class="helpslot" id="help-${esc(s.id)}"></div>
     <pre class="output" id="out-${esc(s.id)}" hidden></pre>
   </div>`;
+}
+
+// ---- "I need help with this": highlight text in a step, say what you are stuck on, get interviewed, pick a way ----
+const helps = new Map(); // step id -> { selection, messages, gaps, busy }
+
+function helpListHtml(items) {
+  if (!items?.length) return "";
+  const rows = items.map((i) => i.body
+    ? `<details class="helpitem"><summary><strong>${esc(i.title)}</strong> <span class="muted">written for you</span></summary>${md(i.body)}</details>`
+    : `<div class="helpitem"><a href="${esc(i.url)}" target="_blank" rel="noopener"><strong>${esc(i.title)}</strong></a>
+        <span class="muted">${i.kind === "tutorial" ? "Full tutorial, build something similar" : `For: ${esc(i.gap)}`}</span>
+        ${i.section ? `<br>Read: ${esc(i.section)}` : ""}<br><span class="muted">${esc(i.why)}</span></div>`);
+  return `<h4>Help for you</h4>${rows.join("")}`;
+}
+
+function helpBoxHtml(stepId) {
+  const h = helps.get(stepId);
+  const chat = h.messages.map((m) => `<div class="bubble ${m.role}">${esc(m.text)}</div>`).join("");
+  let foot;
+  if (h.busy) foot = `<p class="muted">${esc(h.busy)}</p>${h.live ? `<pre class="output">${esc(h.live)}</pre>` : ""}`;
+  else if (h.gaps.length) {
+    foot = `<div class="diagnosis"><p><strong>${esc(h.summary)}</strong></p><ul>${h.gaps.map((g) => `<li><strong>${esc(g.gap)}</strong><br><span class="muted">${esc(g.detail)}</span></li>`).join("")}</ul>
+      <div class="row"><button class="primary" data-help-way="hard" data-step="${esc(stepId)}">The hard way: give me resources to read</button>
+      <button data-help-way="easy" data-step="${esc(stepId)}">The easy way: write the tutorial for me</button></div></div>`;
+  } else {
+    const first = !h.messages.length;
+    foot = `<label class="muted" for="help-input-${esc(stepId)}">${first ? "What is your problem?" : "Your answer"}</label>
+      <textarea id="help-input-${esc(stepId)}" rows="3" placeholder="${first ? "For example: I do not know how to build this." : ""}"></textarea>
+      <div class="row"><button class="primary" data-help-send="${esc(stepId)}">Send</button>${first ? `<button data-help-chip="${esc(stepId)}">I do not know how to build this</button>` : ""}</div>`;
+  }
+  return `<div class="helpbox"><div class="row"><strong>Help with this step</strong><span class="spacer"></span><button class="link" data-help-close="${esc(stepId)}">Close</button></div>
+    <blockquote>${esc(h.selection)}</blockquote><div class="chat">${chat}</div>${foot}</div>`;
+}
+
+function renderHelp(stepId) {
+  const slot = document.getElementById(`help-${stepId}`);
+  if (!slot) return;
+  slot.innerHTML = helps.has(stepId) ? helpBoxHtml(stepId) : "";
+}
+
+async function refreshHelpList(slug, lessonId, stepId) {
+  const l = await api(`/api/courses/${enc(slug)}/lessons/${enc(lessonId)}`);
+  const el = document.getElementById(`helplist-${stepId}`);
+  if (el) el.innerHTML = helpListHtml(l.steps.find((s) => s.id === stepId)?.help);
+}
+
+async function helpTurn(ctx, stepId) {
+  const h = helps.get(stepId);
+  h.busy = "Thinking...";
+  renderHelp(stepId);
+  try {
+    const res = await stream(`/api/courses/${enc(ctx.slug)}/steps/${enc(stepId)}/help/interview`, { selection: h.selection, messages: h.messages }, () => {});
+    const r = res?.reply;
+    if (r?.type === "ask") h.messages.push({ role: "coach", text: r.question });
+    else if (r?.type === "diagnosis") { h.summary = r.summary; h.gaps = r.gaps || []; }
+    else h.messages.push({ role: "coach", text: "I could not work that out. Try saying it another way." });
+  } catch (e) {
+    h.messages.push({ role: "coach", text: e.message });
+  }
+  h.busy = null;
+  renderHelp(stepId);
+}
+
+async function helpWay(ctx, stepId, way) {
+  const h = helps.get(stepId);
+  h.busy = way === "hard" ? "Searching for resources and checking each one. This takes a minute or two." : "Writing your tutorial...";
+  h.live = "";
+  renderHelp(stepId);
+  try {
+    const res = await stream(`/api/courses/${enc(ctx.slug)}/steps/${enc(stepId)}/help/${way}`, { selection: h.selection, messages: h.messages, gaps: h.gaps },
+      (line) => { if (way === "easy") { h.live += line; renderHelp(stepId); } });
+    if (res?.error) h.messages.push({ role: "coach", text: res.error });
+    else { h.messages.push({ role: "coach", text: way === "hard" ? "Added under the step, in Help for you." : "Your tutorial is under the step, in Help for you." }); h.gaps = []; }
+  } catch (e) {
+    h.messages.push({ role: "coach", text: e.message });
+  }
+  h.busy = null; h.live = "";
+  await refreshHelpList(ctx.slug, ctx.id, stepId);
+  renderHelp(stepId);
+  document.getElementById(`helplist-${stepId}`)?.scrollIntoView({ block: "center" });
+}
+
+// The floating button that appears over highlighted step text.
+function setupHelpFab(ctx) {
+  let fab = document.getElementById("helpfab");
+  if (!fab) {
+    fab = document.createElement("button");
+    fab.id = "helpfab";
+    fab.hidden = true;
+    fab.textContent = "I need help with this";
+    document.body.append(fab);
+  }
+  let pending = null;
+  const hide = () => { fab.hidden = true; pending = null; };
+  const check = () => {
+    const sel = getSelection();
+    const text = sel?.toString().trim();
+    const step = sel?.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement)?.closest(".step:not(.locked)");
+    if (!text || text.length < 3 || !step || !step.contains(sel.focusNode) || sel.anchorNode.parentElement?.closest(".helpbox")) return hide();
+    const r = sel.getRangeAt(0).getBoundingClientRect();
+    pending = { stepId: step.id.replace(/^step-/, ""), text: text.slice(0, 2000) };
+    fab.style.top = `${Math.max(8, r.top - 40)}px`;
+    fab.style.left = `${Math.min(innerWidth - 190, Math.max(8, r.left))}px`;
+    fab.hidden = false;
+  };
+  document.onmouseup = () => setTimeout(check, 0);
+  document.onkeyup = (e) => { if (e.shiftKey || e.key.startsWith("Arrow")) check(); };
+  fab.onmousedown = (e) => e.preventDefault();
+  fab.onclick = () => {
+    if (!pending) return;
+    helps.set(pending.stepId, { selection: pending.text, messages: [], gaps: [], busy: null });
+    const stepId = pending.stepId;
+    hide();
+    getSelection().removeAllRanges();
+    renderHelp(stepId);
+    document.getElementById(`help-input-${stepId}`)?.focus();
+  };
 }
 
 async function lesson(slug, id) {
@@ -217,6 +336,9 @@ async function lesson(slug, id) {
     </div>
     <pre class="output" id="job" hidden></pre></div></div>`;
 
+  const ctx = { slug, id };
+  helps.clear();
+  setupHelpFab(ctx);
   const job = document.getElementById("job");
   const runJob = async (path, body) => {
     job.hidden = false;
@@ -234,7 +356,21 @@ async function lesson(slug, id) {
     const b = ev.target.closest("button");
     if (!b) return;
     const d = b.dataset;
-    if (d.jump) {
+    if (d.helpSend) {
+      const box = document.getElementById(`help-input-${d.helpSend}`);
+      const text = box.value.trim();
+      if (!text) return box.focus();
+      helps.get(d.helpSend).messages.push({ role: "learner", text });
+      helpTurn(ctx, d.helpSend);
+    } else if (d.helpChip) {
+      document.getElementById(`help-input-${d.helpChip}`).value = "I do not know how to build this.";
+      document.querySelector(`[data-help-send="${d.helpChip}"]`).click();
+    } else if (d.helpWay) {
+      helpWay(ctx, d.step, d.helpWay);
+    } else if (d.helpClose) {
+      helps.delete(d.helpClose);
+      renderHelp(d.helpClose);
+    } else if (d.jump) {
       document.getElementById(`step-${d.jump}`)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     } else if (d.verify) {
       const out = document.getElementById(`out-${d.verify}`);

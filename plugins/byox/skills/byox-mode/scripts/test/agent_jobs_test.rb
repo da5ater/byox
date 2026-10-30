@@ -58,6 +58,51 @@ class AgentJobsTest < Minitest::Test
     FileUtils.rm_rf(ctx) if ctx
   end
 
+  def test_help_interview_asks_then_diagnoses_in_a_dir_without_the_solution
+    path = "/steps/01.1/help/interview"
+    assert_equal 400, json(:post, api(path), { "selection" => "", "messages" => [{ "role" => "learner", "text" => "x" }] })[0], "needs a selection"
+    assert_equal 400, json(:post, api(path), { "selection" => "a loop", "messages" => [] })[0], "needs the learner's problem"
+    ENV["FAKE_MODE"] = "help_ask"
+    out, done = sse(api(path), { "selection" => "a loop reads", "messages" => [{ "role" => "learner", "text" => "I do not know how" }] })
+    assert_includes out, "BYOX_JSON"
+    assert_equal "ask", done["reply"]["type"]
+    f = fake
+    assert_equal "help_interview", f["env"]["BYOX_JOB"]
+    assert_includes f["argv"][0], "a loop reads"
+    assert_includes f["argv"][0], "Learner: I do not know how"
+    assert_equal File.read(File.join(Byox::PLUGIN_DIR, "agents/helper.md")), f["argv"][f["argv"].index("--append-system-prompt") + 1]
+    denied = f["argv"][f["argv"].index("--disallowedTools") + 1].split(",")
+    assert_includes denied, "Read(/#{File.join(@app_dir, 'course', 'solution')}/**)"
+    refute_includes f["argv"][f["argv"].index("--allowedTools") + 1], "Write"
+
+    ENV["FAKE_MODE"] = "help_diagnosis"
+    _, done = sse(api(path), { "selection" => "a loop", "messages" => [{ "role" => "learner", "text" => "x" }] })
+    assert_equal "reading in a loop", done["reply"]["gaps"][0]["gap"]
+  end
+
+  def test_help_hard_saves_clean_resources_under_the_step
+    ENV["FAKE_MODE"] = "help_hard"
+    gaps = [{ "id" => "g1", "gap" => "reading in a loop", "detail" => "d" }]
+    assert_equal 400, json(:post, api("/steps/01.1/help/hard"), { "selection" => "a loop" })[0], "needs the diagnosis"
+    _, done = sse(api("/steps/01.1/help/hard"), { "selection" => "a loop", "messages" => [{ "role" => "learner", "text" => "x" }], "gaps" => gaps })
+    assert_equal 2, done["saved"], "the javascript: url is dropped"
+    assert_includes fake["argv"][fake["argv"].index("--allowedTools") + 1], "WebSearch"
+    step = json(:get, api("/lessons/01-ping"))[1]["steps"][0]
+    assert_equal ["tutorial", "gap"], step["help"].map { _1["kind"] }
+    assert_equal "reading in a loop", step["help"][1]["gap"]
+  end
+
+  def test_help_easy_saves_the_printed_tutorial
+    ENV["FAKE_MODE"] = "help_easy"
+    gaps = [{ "id" => "g1", "gap" => "reading in a loop", "detail" => "d" }]
+    _, done = sse(api("/steps/01.1/help/easy"), { "selection" => "a loop", "messages" => [], "gaps" => gaps })
+    assert_equal 1, done["saved"]
+    assert_equal File.read(File.join(Byox::PLUGIN_DIR, "skills/byox-teach/SKILL.md")), fake["argv"][fake["argv"].index("--append-system-prompt") + 1]
+    item = Byox::Help.load(Fixture.course(@root), "01.1")[0]
+    assert_equal "Loops by building a counter", item["title"]
+    assert_includes item["body"], "A loop repeats work"
+  end
+
   def test_unclear_keeps_a_rewrite_that_passes_lint
     ENV["FAKE_MODE"] = "rewrite"
     out, done = sse(api("/lessons/01-ping/unclear"), { "section" => "short_read", "note" => "what is a server?" })

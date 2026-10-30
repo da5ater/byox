@@ -189,3 +189,13 @@ details > summary { cursor: pointer; color: var(--muted); }
 .readfirst { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 10px 0 14px; max-width: 68ch; }
 .readfirst ul { list-style: none; margin: 6px 0 0; padding: 0; }
 .readfirst li { margin: 0 0 6px; font-size: 14px; line-height: 1.5; }
+
+#helpfab { position: fixed; z-index: 20; background: var(--brass); color: var(--on-brass); border: 0; border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); }
+.helpbox { border: 1px solid var(--line); border-left: 3px solid var(--brass); border-radius: 6px; background: var(--surface); padding: 12px 14px; margin: 12px 0; }
+.helpbox blockquote { margin: 8px 0; padding: 2px 0 2px 10px; border-left: 3px solid var(--rail); color: var(--muted); font-size: 0.9rem; white-space: pre-wrap; }
+.helpbox textarea { width: 100%; box-sizing: border-box; font: inherit; margin: 4px 0 8px; }
+.bubble { padding: 6px 10px; border-radius: 6px; margin: 6px 0; max-width: 85%; white-space: pre-wrap; }
+.bubble.coach { background: var(--code); }
+.bubble.learner { background: var(--brass-soft); margin-left: auto; }
+.diagnosis ul { padding-left: 18px; }
+.helplist .helpitem { border-left: 3px solid var(--green); padding: 2px 0 2px 12px; margin: 10px 0; }

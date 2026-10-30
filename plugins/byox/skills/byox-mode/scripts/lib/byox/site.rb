@@ -16,6 +16,9 @@ module Byox
       ["GET",  "/api/courses/:course/lessons/:lesson/solution",   :solution],     # 403 until green or skipped
       ["GET",  "/api/courses/:course/lessons/:lesson/compare",    :compare],      # 403 until green or skipped
       ["POST", "/api/courses/:course/steps/:step/explain",        :explain],      # SSE, agent
+      ["POST", "/api/courses/:course/steps/:step/help/interview", :help_interview], # SSE, agent
+      ["POST", "/api/courses/:course/steps/:step/help/hard",      :help_hard],      # SSE, agent
+      ["POST", "/api/courses/:course/steps/:step/help/easy",      :help_easy],      # SSE, agent
       ["POST", "/api/courses/:course/lessons/:lesson/unclear",    :unclear],      # SSE, agent
       ["POST", "/api/courses/:course/lessons/:lesson/broken",     :broken],       # SSE, agent
       ["POST", "/api/courses/:course/lessons/:lesson/bad-resource", :bad_resource],
@@ -169,7 +172,7 @@ module Byox
         { "id" => s.id, "title" => s.title, "kind" => s.kind, "verify" => s.verify, "generators" => s.generators,
           "instructions" => s.instructions, "gotchas" => s.gotchas, "status" => Status.step(c.outline, state, s.id),
           "attempts" => state.dig("steps", s.id, "attempts") || 0, "last_exit" => state.dig("steps", s.id, "last_exit"),
-          "hints" => s.hints.first(revealed), "hints_total" => s.hints.size, "tests" => tests,
+          "hints" => s.hints.first(revealed), "hints_total" => s.hints.size, "tests" => tests, "help" => Help.load(c, s.id),
           "design" => image_url(c, "course/tests/#{s.id}/target.png"),
           "design_url" => s.design_url,
           "read_first" => s.read_first.map { |r| { "url" => r.url, "section" => r.section, "why" => r.why } },
@@ -268,6 +271,24 @@ module Byox
         store_for(c).apply({ "type" => "feedback", "kind" => "explain", "lesson" => l.id, "step" => s.id })
         agent_job(c.dir, :explain, JobInput.new(course: c, config: @config, lesson: l, step: s, section: nil, note: nil,
                                                  failure_path: log, target: l.path))
+      end
+
+      def help_interview(req, course:, step:) = help_job(req, course, step, :help_interview, need: :messages)
+      def help_hard(req, course:, step:) = help_job(req, course, step, :help_hard, need: :gaps)
+      def help_easy(req, course:, step:) = help_job(req, course, step, :help_easy, need: :gaps)
+
+      # The page sends the whole conversation each time, so the agent keeps no state between turns.
+      def help_job(req, course, step, kind, need:)
+        c, l, s = load_step(course, step)
+        selection = req.body["selection"].to_s.strip[0, 2000]
+        return Http.json(400, { "error" => "highlight some text first" }) if selection.empty?
+        return Http.json(400, { "error" => "say what the problem is first" }) if need == :messages && Array(req.body["messages"]).none? { _1["role"] == "learner" }
+        return Http.json(400, { "error" => "the diagnosis is missing" }) if need == :gaps && Array(req.body["gaps"]).empty?
+
+        note = Help.transcript(req.body["messages"], req.body["gaps"])
+        log = verify_log(c, s.id)
+        agent_job(c.dir, kind, JobInput.new(course: c, config: @config, lesson: l, step: s, section: selection, note:,
+                                            failure_path: File.exist?(log) ? log : nil, target: nil))
       end
 
       def unclear(req, course:, lesson:)
