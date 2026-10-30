@@ -15,6 +15,7 @@ Shared by every source. Start here after an intake playbook wrote a draft `cours
 6. **Writers.** Spawn one `lesson-writer` per lesson. Not ported: all at once. Ported: in lesson order, each after the previous one returns, because lesson N's port starts from lesson N-1's last tag. Give each writer paths only:
    - the course dir and its lesson id,
    - its lecture files or article section, and its step diffs,
+   - `skills/byox-short-read`, `skills/byox-task-writing`, `skills/byox-read-first` (the writer reads each SKILL.md), `references/codecrafters-patterns.md`,
    - `references/course-format.md`, `verify-recipes.md`, `resource-rules.md`, `concept-rubric.md`, and `porting.md` when ported,
    - `<vault>/learner-profile.md` and `<vault>/resource-blocklist.md`,
    - the absolute path of `B`,

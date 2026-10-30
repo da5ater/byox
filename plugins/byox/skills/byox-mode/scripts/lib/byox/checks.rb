@@ -23,7 +23,7 @@ module Byox
     def lint(course, config, lesson: nil, offline: false)
       ids = lesson ? [lesson] : course.outline.reject(&:building).map(&:id)
       findings = ids.flat_map { lint_lesson(course, config, _1, offline:) }
-      findings += outline_matches_files(course) + project_findings(course) + stack_findings(course) + audit_findings(course) unless lesson
+      findings += outline_matches_files(course) + project_findings(course) + stack_findings(course) + audit_findings(course) + ui_kit_findings(course) unless lesson
       findings
     end
 
@@ -62,6 +62,17 @@ module Byox
         out << Finding.new(:audit, cells[2], "audit row #{cells[0]} (#{cells[2]}) is still open: fix it, then mark it fixed or wontfix: <reason>")
       end
       out
+    end
+
+    # When the course picked a UI kit, the first step that draws UI installs it.
+    def ui_kit_findings(course)
+      kit = course.meta.dig("stack", "choices", "ui_kit").to_s.downcase[/[a-z0-9]+/]
+      return [] if kit.nil? || kit == "none"
+
+      first = course.lessons.flat_map(&:steps).find { %w[ui visual].include?(_1.kind) }
+      return [] if first.nil? || first.generators.any? { _1.downcase.include?(kit) }
+
+      [Finding.new(:ui_kit, first.id, "#{first.id} is the first UI step but does not install #{kit}: install the UI kit there and build with its components, never plain markup first")]
     end
 
     MAX_SHORT_READ_WORDS = 200

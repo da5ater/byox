@@ -18,14 +18,15 @@ Paths only. Read each one before you write.
 - The rules: `skills/byox-mode/references/course-format.md`, `verify-recipes.md`, `frontend-design.md`, `resource-rules.md`, `concept-rubric.md`, `porting.md` when the course is ported.
 - `learner-profile.md` and `resource-blocklist.md` from the vault.
 - Port mode adds the base tag and the target stack.
+- The writing skills, read in full before you write prose: `skills/byox-short-read/SKILL.md`, `skills/byox-task-writing/SKILL.md` and `skills/byox-read-first/SKILL.md`.
 
 ## Order of work
 
 1. **Tests first.** For each step, write `course/tests/<step>/` and `course/verify/<step>.sh` from the behavior in the mentor's diff. In a split course, scripts reach course files through `$BYOX_COURSE` and other projects through `$BYOX_PROJECT_<NAME>`, as `course-format.md` says. Use the recipe for the step's `kind`. Use random values for anything a learner could hardcode. A `visual` step starts with the design handoff, because the target image is its test: follow `skills/byox-mode/references/frontend-design.md` and start from `references/templates/verify-visual.sh`. A `cloud` step starts from `references/templates/verify-cloud.sh`.
 2. **Port, in port mode only.** Port the mentor's code for each step into `course/solution` on the target stack, then run `byox tag <course> <step>`. Follow `porting.md`. The same tests must pass on the port.
 3. **Run the strength check.** `byox strength <course> --lesson <id>`. Every row must say `ok`. A `weak` row means the test passes without the step's code. Tighten the test. A `broken` row means the test fails on the step's own code. Fix the test or the port.
-4. **Prose.** Fill the lesson file stub per `course-format.md`. Goal, Short read, Task, then the steps with instructions and three hints.
-5. **Resources.** Pick one primary and one backup per `resource-rules.md`. Open and read each one before you pick it.
+4. **Prose.** Fill the lesson file stub per `course-format.md`, using `byox-short-read` for the Short read and `byox-task-writing` for the Task, steps and hints. Goal, Short read, Task, then the steps with instructions and three hints.
+5. **Resources.** Pick one primary and one backup per `resource-rules.md`. Open and read each one before you pick it. Then give each step its `read_first` (one or two entries) with `byox-read-first`.
 6. **Lint.** `byox lint <course> --lesson <id>`. Fix every row.
 
 Repeat steps 3 and 6 until both pass. Stop after three rounds and report what is blocked.

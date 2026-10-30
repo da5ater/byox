@@ -28,7 +28,7 @@ Paths only.
 
 ## 2. Score it
 
-Score the lesson 0 to 2 on R1 to R11 from `course-format.md`. Give one sentence of evidence per score. Every lesson needs 2 on R5, R6, R7 and R10, and at least 14 of 16 on the rest (R10 not counted).
+Check the Short read against `skills/byox-short-read/SKILL.md` and the Task, steps and hints against `skills/byox-task-writing/SKILL.md`: a plain-words Short read, a one-sentence goal, Requirements bullets and an Example per step, one action per setup item, a checkpoint at least every five items, hints as questions. Check each step's `read_first` against `skills/byox-read-first/SKILL.md`. Score the lesson 0 to 2 on R1 to R11 from `course-format.md`. Give one sentence of evidence per score. Every lesson needs 2 on R5, R6, R7 and R10, and at least 14 of 16 on the rest (R10 not counted).
 
 ## 3. Check the facts
 

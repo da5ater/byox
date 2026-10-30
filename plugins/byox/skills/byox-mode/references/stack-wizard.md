@@ -27,6 +27,16 @@ Run this at the very start of a compile, before the outline and before any lesso
 2. **Designs.** `penpot-diff`: a Penpot frame per UI step, checked by a coarse screenshot compare. `penpot`: a Penpot frame per UI step, checked by DOM tests only. `html`: a design built in plain HTML. `none`: text steps only. Anything but `none` means every `ui` or `visual` step needs a `design_url`, or a `design_exempt` reason, and `byox lint` enforces it.
 3. **External services.** Per service: real account, free tier, sandbox or stub.
 
+## Plan before any lesson
+
+The wizard is a planning session, not a form. Before the outline, settle three things and write them down, because every step names them:
+
+- **Folders.** Which projects exist and what each folder is called (`work/api`, `work/frontend`).
+- **Stack.** Language, framework, build tool, UI kit, test runner, per project.
+- **Architecture.** How the projects talk to each other, and whether the learner wants to change it (services, a monorepo).
+
+The UI kit is used from the first step that draws anything. If the kit is shadcn/ui, step one of the frontend installs it and builds with its components. `byox lint` reports a first UI step that does not (`ui_kit`).
+
 ## Record it
 
 Write the answers into `course.md`, so lint and the writers read the same facts:
@@ -44,7 +54,7 @@ stack:
     language: ruby (api), typescript (frontend)
     architecture: api plus frontend
     ui_kit: shadcn/ui, radix, neutral, css variables
-    design: penpot-diff
+    design: penpot
 ```
 
 `language`, `architecture` and `design` are required. Add any other key a lesson depends on. Show the learner the recorded block and get a yes before the outline.
