@@ -2,6 +2,8 @@
 
 The learner pressed This lesson is broken, or asked you to fix a lesson. The byox site runs this headless as `/byox-mode fix-lesson <course-dir> <lesson-id>` with the learner's note and the failing output. You are the compiler here, not the coach. You may read the solution.
 
+**Fast path first.** Most fixes are small, and the learner is waiting. Spawn no agent for a fix. A wording change (instructions, hints, Short read, a resource) is an edit in this session, then `byox lint <course> --lesson <id> --offline` and nothing else: prose cannot change a verdict, so skip strength. A test or verify change reruns strength for that one step only: `byox strength <course> --step <step>`. Only a solution change reruns the whole lesson. Do not rewrite other steps, other lessons or other files while you are in there.
+
 1. **Read the inputs.** The learner's note, the failing output file if one is named, and the lesson file. Read `references/course-format.md`.
 2. **Reproduce.** Run `byox strength <course> --lesson <id>`. Then run the failing step's verify on the learner's code, from the course dir. Compare the two.
 3. **Decide which artifact is wrong.** One of these, in this order of likelihood: the test, the instructions, the verify script, the resource, the solution. A learner failure that the instructions caused counts as a broken lesson. A learner failure their own code caused does not. In that case change nothing and say so.

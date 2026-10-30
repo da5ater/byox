@@ -131,6 +131,13 @@ class PluginTest < Minitest::Test
     assert_includes File.read(File.join(base, "references/verify-recipes.md")), "--regress"
   end
 
+  def test_fix_lesson_has_a_fast_path_that_skips_agents_and_strength_for_prose
+    fix = File.read(File.join(PLUGIN, "skills/byox-mode/playbooks/fix-lesson.md"))
+    assert_match(/Fast path/, fix)
+    assert_match(/Spawn no agent/, fix)
+    assert_match(/--step/, fix)
+  end
+
   def test_compile_starts_with_the_stack_wizard_and_the_wizard_covers_the_choices_lint_requires
     base = File.join(PLUGIN, "skills/byox-mode")
     assert_includes File.read(File.join(base, "playbooks/compile.md")), "references/stack-wizard.md"
