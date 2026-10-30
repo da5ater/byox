@@ -180,3 +180,12 @@ details > summary { cursor: pointer; color: var(--muted); }
   .continue { grid-template-columns: 1fr; }
   .design { grid-template-columns: 1fr; }
 }
+
+/* A step is a checklist, not a wall: space between items, a readable line length. */
+.step ol, .step ul { padding-left: 1.5em; max-width: 68ch; }
+.step ol > li, .step ul > li { margin: 0 0 16px; line-height: 1.6; }
+.step ol > li > ul { margin-top: 8px; }
+.step p { max-width: 68ch; line-height: 1.6; }
+.readfirst { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 10px 0 14px; max-width: 68ch; }
+.readfirst ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.readfirst li { margin: 0 0 6px; font-size: 14px; line-height: 1.5; }

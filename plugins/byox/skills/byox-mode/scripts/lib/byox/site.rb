@@ -172,6 +172,7 @@ module Byox
           "hints" => s.hints.first(revealed), "hints_total" => s.hints.size, "tests" => tests,
           "design" => image_url(c, "course/tests/#{s.id}/target.png"),
           "design_url" => s.design_url,
+          "read_first" => s.read_first.map { |r| { "url" => r.url, "section" => r.section, "why" => r.why } },
           "design_phone" => image_url(c, "course/tests/#{s.id}/target-phone.png"),
           "design_source" => (s.kind == "visual" && File.file?(File.join(c.dir, "course/design/#{s.id}/design.html")) ? "course/design/#{s.id}/design.html" : nil),
           "diff" => (s.kind == "visual" ? image_url(c, "course/.cache/diff-#{s.id}.png") : nil) }

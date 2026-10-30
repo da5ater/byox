@@ -143,6 +143,12 @@ function unclearButton(section) {
   return `<button class="link" data-unclear="${esc(section)}" title="This section is unclear">Unclear?</button>`;
 }
 
+function readFirstHtml(s) {
+  if (!s.read_first || !s.read_first.length) return "";
+  const items = s.read_first.map((r) => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.section)}</a><span class="muted"> ${esc(r.why)}</span></li>`).join("");
+  return `<div class="readfirst"><strong>Read first</strong><ul>${items}</ul></div>`;
+}
+
 function designHtml(s) {
   if (!s.design && !s.design_phone && !s.diff && !s.design_source && !s.design_url) return "";
   const fig = (url, cap, cls = "") => (url ? `<figure class="${cls}"><img src="${esc(url)}?t=${s.attempts}" alt="${esc(cap)}" loading="lazy"><figcaption>${esc(cap)}</figcaption></figure>` : "");
@@ -161,7 +167,7 @@ function stepHtml(s) {
   return `<div class="step ${s.status}" id="step-${esc(s.id)}">
     <div class="row"><h3>${s.status === "green" ? `<span class="check">&#10003;</span>` : ""}<code>${esc(s.id)}</code> ${esc(s.title)}</h3><span class="spacer"></span>${unclearButton(`step ${s.id}`)}</div>
     <p class="muted"><code>${esc(s.verify)}</code></p>
-    ${md(s.instructions)}${gens}${designHtml(s)}
+    ${readFirstHtml(s)}${md(s.instructions)}${gens}${designHtml(s)}
     ${s.gotchas ? `<p><strong>Gotchas.</strong></p>${md(s.gotchas)}` : ""}
     ${hints}
     <div class="row"><button class="primary" data-verify="${esc(s.id)}">Verify</button>${more}${explain}</div>

@@ -23,7 +23,7 @@ module Byox
 
   Resource = Data.define(:url, :section, :why)
 
-  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values, :design_url, :design_exempt) do
+  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values, :design_url, :design_exempt, :read_first) do
     def tag = "step-#{id}"
     def tests_dir = "course/tests/#{id}"
   end
@@ -171,13 +171,19 @@ module Byox
       problems << [:sections_present, "#{where}: instructions are empty"] if raw["instructions"].to_s.strip.empty?
       design_url = raw["design_url"].to_s.strip
       problems << [:front_matter, "#{where}: design_url must be an https link"] unless design_url.empty? || design_url.match?(%r{\Ahttps://\S+\z})
+      read_first = Array(raw["read_first"]).map do |r|
+        r = {} unless r.is_a?(Hash)
+        %w[url section why].each { |f| problems << [:front_matter, "#{where}: read_first entry needs #{f}"] if r[f].to_s.strip.empty? }
+        Resource.new(url: r["url"].to_s, section: r["section"].to_s, why: r["why"].to_s)
+      end
+      problems << [:front_matter, "#{where}: read_first has #{read_first.size} entries, at most 2"] if read_first.size > 2
       hints = Array(raw["hints"]).map(&:to_s)
       problems << [:three_hints, "#{where}: has #{hints.size} hints, needs 3"] unless hints.size == 3 && hints.none? { _1.strip.empty? }
       Step.new(id:, title: raw["title"].to_s, kind: raw["kind"].to_s, verify: raw["verify"].to_s,
                generators: Array(raw["generators"]).map(&:to_s), generated: Array(raw["generated"]).map(&:to_s),
                instructions: raw["instructions"].to_s, gotchas: raw["gotchas"].to_s, hints:,
                fixed_values: raw["fixed_values"].to_s.strip, design_url: (design_url.empty? ? nil : design_url),
-               design_exempt: raw["design_exempt"].to_s.strip)
+               design_exempt: raw["design_exempt"].to_s.strip, read_first:)
     end
 
     def generated?(path, globs)

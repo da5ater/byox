@@ -67,9 +67,9 @@ class StackTest < Minitest::Test
   def test_a_design_link_or_an_exemption_clears_it
     set_choices("language: ruby\narchitecture: one program\ndesign: penpot\n")
     make_ui
-    edit("course/lessons/01-ping.md") { _1.sub("kind: ui", "kind: ui\n          design_url: https://design.penpot.app/#/view?x=1") }
+    edit("course/lessons/01-ping.md") { _1.sub("kind: ui", "kind: ui\n    design_url: https://design.penpot.app/#/view?x=1") }
     refute(findings(:design_canvas).any? { _1.include?("01.1") })
-    edit("course/lessons/01-ping.md") { _1.sub(/\n\s*design_url:[^\n]*/, "\n          design_exempt: only creates the project") }
+    edit("course/lessons/01-ping.md") { _1.sub(/\n\s*design_url:[^\n]*/, "\n    design_exempt: only creates the project") }
     refute(findings(:design_canvas).any? { _1.include?("01.1") })
   end
 

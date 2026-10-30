@@ -199,7 +199,7 @@ module Byox
       blocked = config.blocklist
       out = []
       out << Finding.new(:resources, lesson.id, "needs 2 resources, has #{lesson.resources.size}") unless lesson.resources.size == 2
-      lesson.resources.each do |r|
+      (lesson.resources + lesson.steps.flat_map(&:read_first)).each do |r|
         out << Finding.new(:resources, lesson.id, "#{r.url} is on the blocklist") if blocked.include?(r.url)
         out << Finding.new(:resources, lesson.id, "#{r.url} has no section") if r.section.strip.empty?
       end
@@ -207,7 +207,7 @@ module Byox
     end
 
     def links_resolve(lesson, offline:)
-      urls = (lesson.resources.map(&:url) + lesson.sections.values.join("\n").scan(LINK).flatten).uniq
+      urls = (lesson.resources.map(&:url) + lesson.steps.flat_map(&:read_first).map(&:url) + lesson.sections.values.join("\n").scan(LINK).flatten).uniq
       urls.filter_map do |url|
         problem = link_problem(url, offline:)
         Finding.new(:links_resolve, lesson.id, "#{url}: #{problem}") if problem
