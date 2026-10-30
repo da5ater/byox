@@ -22,12 +22,19 @@ class FormatTest < Minitest::Test
     l = @course.lesson("01-ping")
     assert_equal "Talk over stdin", l.title
     assert_includes l.goal, "PING with PONG"
-    assert_equal %i[short_read task tests], l.sections.keys
-    assert_includes l.sections[:tests], "**01.1.**"
+    assert_equal %i[short_read task], l.sections.keys
     s = l.steps.first
     assert_equal ["01.1", "cli", "sh course/verify/01.1.sh", "step-01.1"], [s.id, s.kind, s.verify, s.tag]
     assert_equal 3, s.hints.size
     assert_equal 2, l.resources.size
+  end
+
+  # Courses compiled before the section was dropped still parse. Its text is ignored.
+  def test_a_lesson_with_the_old_tests_in_plain_English_section_still_parses_without_it
+    Fixture.edit_lesson(@root, "01-ping") { _1 + "\n## Tests in plain English\n\n**01.1.** The check sends PING.\n" }
+    l = @course.lesson("01-ping")
+    assert_equal %i[short_read task], l.sections.keys
+    refute_includes l.sections.values.join, "The check sends PING"
   end
 
   def test_two_hints_never_become_a_step

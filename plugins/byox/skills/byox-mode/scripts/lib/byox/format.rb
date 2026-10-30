@@ -15,7 +15,9 @@ module Byox
 
   STEP_ID = /\A\d{2}\.\d+\z/
   KINDS = %w[backend cli ui visual cloud perf stub].freeze
-  SECTIONS = { "Short read" => :short_read, "Task" => :task, "Tests in plain English" => :tests }.freeze
+  SECTIONS = { "Short read" => :short_read, "Task" => :task }.freeze
+  # Dropped from the format. A lesson compiled earlier may still carry it, and it is ignored.
+  LEGACY_SECTIONS = ["Tests in plain English"].freeze
   # A "Gotchas" section is no longer written, so it is not required. Older pages that have it still match in order.
   CONCEPT_HEADINGS = ["The problem", "How it works", "A tiny example", "What ", "Diagrams"].freeze
 
@@ -151,7 +153,7 @@ module Byox
     def h2_sections(body, problems)
       parts = body.split(/^## (.+)\n/)
       found = parts.drop(1).each_slice(2).to_h { |name, text| [name.strip, text.to_s.strip] }
-      (found.keys - SECTIONS.keys).each { problems << [:sections_present, "unknown section '#{_1}'"] }
+      (found.keys - SECTIONS.keys - LEGACY_SECTIONS).each { problems << [:sections_present, "unknown section '#{_1}'"] }
       SECTIONS.to_h do |name, key|
         problems << [:sections_present, "section '#{name}' is missing or empty"] if found[name].to_s.empty?
         [key, found[name].to_s]

@@ -26,7 +26,7 @@ class LintTest < Minitest::Test
   end
 
   def test_sections_present
-    Fixture.edit_lesson(@root, "01-ping") { _1.sub(/## Task\n.*?(?=## Tests)/m, "") }
+    Fixture.edit_lesson(@root, "01-ping") { _1.sub(/## Task\n.*\z/m, "") }
     assert_finding(:sections_present, "01-ping")
   end
 

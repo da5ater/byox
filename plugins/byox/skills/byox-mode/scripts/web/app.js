@@ -196,7 +196,6 @@ async function lesson(slug, id) {
     <h2>Goal</h2><div class="goal">${md(l.goal)}</div>
     <h2>Short read ${unclearButton("short_read")}</h2>${md(l.sections.short_read)}
     <h2>Task ${unclearButton("task")}</h2>${md(l.sections.task)}
-    <h2>Tests in plain English ${unclearButton("tests")}</h2>${md(l.sections.tests)}
     <details><summary>Test code</summary>${tests}</details>
     <h2>Steps</h2>${l.steps.map(stepHtml).join("")}
     <h2>Resource</h2>${resource}

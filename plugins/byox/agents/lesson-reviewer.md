@@ -28,7 +28,7 @@ Paths only.
 
 ## 2. Score it
 
-Score the lesson 0 to 2 on R1 to R11 from `course-format.md`. Give one sentence of evidence per score. Every lesson needs 2 on R5, R6, R7 and R10, and at least 16 of 20 on the rest.
+Score the lesson 0 to 2 on R1 to R11 from `course-format.md`. Give one sentence of evidence per score. Every lesson needs 2 on R5, R6, R7 and R10, and at least 14 of 16 on the rest (R10 not counted).
 
 ## 3. Check the facts
 
@@ -42,7 +42,7 @@ Answer the review questions in `concept-rubric.md` with yes or no for each page.
 
 ## 5. Fix what is yours to fix
 
-- Fix prose in place: the Short read, Task, Tests in plain English, instructions, hints and resources, and concept pages. Remove any field or section that `course-format.md` does not list.
+- Fix prose in place: the Short read, Task, instructions, hints and resources, and concept pages. Remove any field or section that `course-format.md` does not list.
 - Never edit tests, verify scripts, the solution repo or `course.md`. Report those to the lead.
 - Run `B lint <course> --lesson <id>` after your edits. It must print nothing.
 

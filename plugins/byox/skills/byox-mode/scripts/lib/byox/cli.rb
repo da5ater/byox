@@ -149,7 +149,7 @@ module Byox
             "generators" => [], "generated" => [], "instructions" => STUB, "hints" => [STUB] * 3 }
         end,
       }
-      "#{meta.to_yaml}---\n\n## Short read\n\n#{STUB}\n\n## Task\n\n#{STUB}\n\n## Tests in plain English\n\n#{STUB}\n"
+      "#{meta.to_yaml}---\n\n## Short read\n\n#{STUB}\n\n## Task\n\n#{STUB}\n"
     end
 
     def cmd_split(args, _opts)

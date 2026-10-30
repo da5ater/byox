@@ -232,13 +232,6 @@ module MiniRedis
       - `PING` prints `PONG`.
       - `ECHO <word>` prints `<word>`.
 
-      ## Tests in plain English
-
-      **01.1.** The check sends `PING` a random number of times, between 2 and 6, and expects
-      exactly that many `PONG` lines.
-
-      **01.2.** The check sends `ECHO hey-<random hex>` and then `PING`. It expects the word
-      back on one line, then `PONG`.
     MD
     "02-store" => <<~MD
       ---
@@ -306,13 +299,6 @@ module MiniRedis
       - `GET <key>` prints the value, or `(nil)` for a missing key.
       - `DEL <key>` prints `1` if the key existed, else `0`.
 
-      ## Tests in plain English
-
-      **02.1.** The check sets a random key to a random value, gets it back, then gets a key
-      that was never set. It expects `OK`, the value, then `(nil)`.
-
-      **02.2.** The check sets a random key, deletes it, gets it, and deletes it again. It
-      expects `OK`, `1`, `(nil)`, `0`.
     MD
   }.freeze
 

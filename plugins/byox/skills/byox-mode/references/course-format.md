@@ -110,7 +110,7 @@ The lesson and step ids and titles in `course.md` must match the lesson files ex
 
 ## Lesson file
 
-Front matter holds every field a script or the site reads. The body has exactly three H2 sections, in this order: `## Short read`, `## Task`, `## Tests in plain English`.
+Front matter holds every field a script or the site reads. The body has exactly two H2 sections, in this order: `## Short read` and `## Task`. A lesson compiled earlier may still carry `## Tests in plain English`. It is ignored and not written any more, because the steps already say what the check expects.
 
 ```yaml
 ---
@@ -158,10 +158,6 @@ source with the rambling removed. Never solution code.
 
 The precise spec, as a short list.
 
-## Tests in plain English
-
-**03.2.** Signed out, the check requests `/courses` and expects a redirect to
-`/users/sign_in`. Signed in as a random user, it requests `/courses` and expects 200.
 ```
 
 ### Field rules
@@ -174,7 +170,6 @@ The precise spec, as a short list.
 - `design_url` is optional. On a `visual` step, an https link to the design, such as a Penpot view link. The lesson page shows it as a button.
 - `design_exempt` is optional. One sentence on why a `ui` or `visual` step has no design, such as a step that only creates the project. With `stack.choices.design` other than `none`, lint requires `design_url` or this.
 - `fixed_values` is optional. Set it to one sentence when the expected answer is fixed by the task and cannot be randomized, such as an app's module name or the root route. Lint then skips its random-values check for that step. An empty reason does not count.
-- Tests in plain English has one `**<step id>.**` paragraph per step. Say exactly what the check sends and what it expects, including which values are random.
 
 ### Hints
 
@@ -202,13 +197,12 @@ Lessons unlock in order. Skip on a lesson unlocks the next one and its solution,
 
 ## Quality bar
 
-The auditor scores every lesson on these, 0 to 2 each. Every lesson must score 2 on R5, R6 and R7, and at least 15 of 18 overall, excluding R10. The numbering keeps its gaps so older audit reports stay readable. R10 must be 2.
+The auditor scores every lesson on these, 0 to 2 each. Every lesson must score 2 on R5, R6 and R7, and at least 14 of 16 overall, excluding R10. The numbering keeps its gaps so older audit reports stay readable. R10 must be 2.
 
 | # | Dimension | What a 2 looks like |
 |---|---|---|
 | R1 | Concept, the why | Explains the mechanism, not just the API. |
 | R2 | Task precision | Exact inputs and expected outputs. |
-| R3 | Tests in plain English | States what the check sends and expects, without reading test code. |
 | R5 | Solution withheld | No solution code before the lesson is green or skipped. |
 | R6 | Steps without code | An ordered path that still leaves the typing to the learner. |
 | R7 | Hint ladder | Three escalating hints, revealed one at a time. |
