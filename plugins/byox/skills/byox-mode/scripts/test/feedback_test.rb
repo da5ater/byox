@@ -41,6 +41,18 @@ class FeedbackTest < Minitest::Test
     assert_equal 2, byox("feedback", "add", "  ")[0], "empty feedback is bad input"
   end
 
+  def test_a_fix_made_by_a_direct_commit_closes_its_item
+    byox("feedback", "add", "Stack options at the start")
+    _, open = byox("feedback", "list", "--open")
+    id = open.lines[1].split("\t")[0]
+    assert_equal 2, byox("feedback", "mark", id)[0], "mark needs a --pr or a --commit"
+    assert_equal 0, byox("feedback", "mark", id, "--commit", "61a4ed2")[0]
+    _, still_open = byox("feedback", "list", "--open")
+    assert_equal 1, still_open.lines.size, "only the header is left"
+    _, all = byox("feedback", "list")
+    assert_includes all, "done\t\tStack options at the start\t61a4ed2"
+  end
+
   def test_the_site_saves_feedback_with_the_page_it_came_from
     assert_equal 400, json(:post, "/api/feedback", { "text" => " ", "page" => "#/" })[0]
     code, body = json(:post, "/api/feedback", { "text" => "Make the course map bigger", "page" => "#/c/mini-redis" })

@@ -5,7 +5,7 @@ module Byox
   # event in <root>/.byox/feedback.jsonl. A later line for the same id wins, so marking
   # an item is an append and the log keeps its history.
   module Feedback
-    Item = Data.define(:id, :at, :text, :page, :status, :pr)
+    Item = Data.define(:id, :at, :text, :page, :status, :pr, :commit)
 
     module_function
 
@@ -14,17 +14,18 @@ module Byox
       raise ArgumentError, "feedback text is empty" if text.empty?
 
       item = Item.new(id: "fb-#{Time.now.utc.strftime('%Y%m%d%H%M%S')}-#{SecureRandom.hex(2)}", at: State.now,
-                      text:, page: page.to_s, status: "open", pr: nil)
+                      text:, page: page.to_s, status: "open", pr: nil, commit: nil)
       append(config, item.to_h)
       item
     end
 
-    def mark(config, ids, pr:)
+    # A pull request marks an item in_pr. A direct commit that fixed it marks it done.
+    def mark(config, ids, pr: nil, commit: nil)
       known = all(config).map(&:id)
       unknown = ids - known
       raise ArgumentError, "unknown feedback id: #{unknown.join(', ')}" unless unknown.empty?
 
-      ids.each { append(config, { id: _1, status: "in_pr", pr: }) }
+      ids.each { append(config, commit ? { id: _1, status: "done", commit: } : { id: _1, status: "in_pr", pr: }) }
     end
 
     def all(config)

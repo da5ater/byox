@@ -23,5 +23,5 @@ Run by the `feedback` agent. `B` is `skills/byox-mode/scripts/byox` in the repo 
    - a two-column table, Before and After, with each image as `![before](https://github.com/HEAD_OWNER/byox/blob/feedback/D/docs/feedback/D/<id>-before.png?raw=true)`, so the images load from the branch the pull request comes from,
    - the tests that prove it, if any.
    Then a "Not done" section for skipped items with the reason, and "How to try it" with the commands to run the site from the branch.
-12. **Mark the shipped items.** `B feedback mark <ids> --pr <url> --root R`. Skipped items stay open.
+12. **Mark the shipped items.** `B feedback mark <ids> --pr <url> --root R`. Skipped items stay open. When a fix landed outside ship mode, by a direct commit, close each item it answers with `B feedback mark <ids> --commit <sha> --root R`, so it stops coming back as open.
 13. **Clean up.** Confirm no process you started still listens on 4931 or 4932. Remove the scratch roots by their literal paths. Remove the worktree with `git -C REPO worktree remove W`. The branch stays on GitHub for review.

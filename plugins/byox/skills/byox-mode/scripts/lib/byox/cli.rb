@@ -19,7 +19,7 @@ module Byox
         byox migrate  PROJECT_DIR [--projects api,frontend] [--dry-run]
         byox evidence [--since DATE] [--root DIR]
         byox transcripts [--root DIR]
-        byox feedback add TEXT [--page HASH] | list [--open] | mark ID... --pr URL   [--root DIR]
+        byox feedback add TEXT [--page HASH] | list [--open] | mark ID... (--pr URL | --commit SHA)   [--root DIR]
       Exit codes: 0 ok, 1 check failed, 2 bad input.
     TXT
 
@@ -53,6 +53,7 @@ module Byox
         o.on("--out FILE") { opts[:out] = _1 }
         o.on("--open") { opts[:open] = true }
         o.on("--pr URL") { opts[:pr] = _1 }
+        o.on("--commit SHA") { opts[:commit] = _1 }
       end.parse(argv)
       send("cmd_#{cmd.tr("-", "_")}", args, opts)
     rescue OptionParser::ParseError, ArgumentError, FormatError => e
@@ -199,11 +200,11 @@ module Byox
       when "list"
         items = opts[:open] ? Feedback.open(config) : Feedback.all(config)
         puts %w[id status page text pr].join("\t")
-        items.each { |i| puts [i.id, i.status, i.page, i.text.tr("\t\n", "  "), i.pr].join("\t") }
+        items.each { |i| puts [i.id, i.status, i.page, i.text.tr("\t\n", "  "), i.pr || i.commit].join("\t") }
       when "mark"
-        raise ArgumentError, "mark needs ids and --pr URL" if args.empty? || opts[:pr].to_s.empty?
+        raise ArgumentError, "mark needs ids and --pr URL or --commit SHA" if args.empty? || (opts[:pr].to_s.empty? && opts[:commit].to_s.empty?)
 
-        Feedback.mark(config, args, pr: opts[:pr])
+        Feedback.mark(config, args, pr: opts[:pr], commit: opts[:commit])
       else
         return usage
       end
