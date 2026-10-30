@@ -8,7 +8,7 @@ module Byox
       usage:
         byox site     [--root DIR] [--port 4917]
         byox lint     COURSE_DIR [--lesson ID] [--offline]
-        byox strength COURSE_DIR [--lesson ID] [--step ID]
+        byox strength COURSE_DIR [--lesson ID] [--step ID] [--regress]
         byox new      COURSE_DIR
         byox split    TRANSCRIPT OUT_DIR
         byox match    LECTURES_DIR REPO [--until REF]
@@ -37,6 +37,7 @@ module Byox
         o.on("--port N", Integer) { opts[:port] = _1 }
         o.on("--lesson ID") { opts[:lesson] = _1 }
         o.on("--step ID") { opts[:step] = _1 }
+        o.on("--regress") { opts[:regress] = true }
         o.on("--offline") { opts[:offline] = true }
         o.on("--until REF") { opts[:until] = _1 }
         o.on("--from REPO") { opts[:from] = _1 }
@@ -92,7 +93,8 @@ module Byox
 
     def cmd_strength(args, opts)
       dir = args.fetch(0) { return usage }
-      rows = Checks.strength(Course.load(dir), lesson: opts[:lesson], step: opts[:step])
+      course = Course.load(dir)
+      rows = opts[:regress] ? Checks.regress(course, lesson: opts[:lesson]) : Checks.strength(course, lesson: opts[:lesson], step: opts[:step])
       puts %w[step prev_exit this_exit verdict].join("\t")
       rows.each { puts _1 }
       rows.all? { %w[ok exempt].include?(_1.verdict) } ? 0 : 1

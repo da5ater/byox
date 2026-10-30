@@ -230,19 +230,36 @@ module Byox
       lessons.flat_map(&:steps).select { step.nil? || _1.id == step }.map { strength_step(course, _1) }
     end
 
+    # The step's verify, run against the solution exported at `tag`.
+    def verify_at(course, step, tag)
+      Dir.mktmpdir("byox-strength-") do |tmp|
+        Solution.export_work(course, tag, tmp)
+        File.symlink(course.course_dir, File.join(tmp, "course")) unless course.layout == "split"
+        env = { "BYOX_STEP" => step.id, "BYOX_BIN" => BIN }.merge(course.project_env(tmp))
+        cwd = course.layout == "split" ? course.project_dir(course.projects.first, tmp) : tmp
+        Shell.capture(step.verify, cwd:, env:, timeout: 300).first
+      end
+    end
+
+    # A later step can break an earlier step's check, for example by adding a login every
+    # page needs. Run each released step's verify on the last tag: the course's last, or
+    # the given lesson's. A step that passed on its own tag and fails there has regressed.
+    def regress(course, lesson: nil)
+      steps = course.lessons.flat_map(&:steps)
+      steps = steps.take_while { _1.id != course.lesson(lesson).steps.last.id }.push(course.lesson(lesson).steps.last) if lesson
+      steps = steps.reject { _1.kind == "cloud" || !Solution.tag?(course, _1.tag) }
+      last = steps.last
+      steps.map do |s|
+        code = verify_at(course, s, last.tag)
+        StrengthRow.new(s.id, "-", code, code.zero? ? "ok" : "regressed")
+      end
+    end
+
     def strength_step(course, step)
       return StrengthRow.new(step.id, "-", "-", "exempt") if step.kind == "cloud"
       return StrengthRow.new(step.id, "-", "-", "missing tag") unless Solution.tag?(course, step.tag)
 
-      prev_exit, this_exit = [course.previous_tag(step.id), step.tag].map do |tag|
-        Dir.mktmpdir("byox-strength-") do |tmp|
-          Solution.export_work(course, tag, tmp)
-          File.symlink(course.course_dir, File.join(tmp, "course")) unless course.layout == "split"
-          env = { "BYOX_STEP" => step.id, "BYOX_BIN" => BIN }.merge(course.project_env(tmp))
-          cwd = course.layout == "split" ? course.project_dir(course.projects.first, tmp) : tmp
-          Shell.capture(step.verify, cwd:, env:, timeout: 300).first
-        end
-      end
+      prev_exit, this_exit = [course.previous_tag(step.id), step.tag].map { verify_at(course, step, _1) }
       verdict = if this_exit != 0 then "broken"
                 elsif prev_exit.zero? then "weak"
                 else "ok"

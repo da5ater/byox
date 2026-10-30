@@ -25,6 +25,8 @@ Every step's `verify` field names one shell command, usually `sh "$BYOX_COURSE/v
 | `perf` | A benchmark script that fails above the lesson's threshold. Print the measured number. |
 | `stub` | Tests against the stub or sandbox the user chose for the service in `course.md`. Stripe uses test mode keys. Email uses the framework's test delivery. OAuth uses a mock provider. |
 
+A step's check must still pass after every later step. When a later step adds a login, a required column or a renamed route, update the earlier checks in the same change: sign in through a helper in `course/support/` that does nothing before the user model exists. `byox strength <course> --regress` reruns every released step's check on the last tag and reports `regressed`.
+
 ## Cloud and DevOps steps
 
 The learner works against whatever they have. The same script runs unchanged against both, because the AWS CLI reads `AWS_ENDPOINT_URL`.

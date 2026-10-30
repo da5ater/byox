@@ -125,6 +125,12 @@ class PluginTest < Minitest::Test
   end
 
   # The variables byox hands to verify scripts are part of the contract with course writers.
+  def test_the_playbooks_run_the_regression_check_and_the_recipes_explain_it
+    base = File.join(PLUGIN, "skills/byox-mode")
+    %w[playbooks/compile.md playbooks/add-lessons.md].each { assert_includes File.read(File.join(base, _1)), "--regress" }
+    assert_includes File.read(File.join(base, "references/verify-recipes.md")), "--regress"
+  end
+
   def test_compile_starts_with_the_stack_wizard_and_the_wizard_covers_the_choices_lint_requires
     base = File.join(PLUGIN, "skills/byox-mode")
     assert_includes File.read(File.join(base, "playbooks/compile.md")), "references/stack-wizard.md"
