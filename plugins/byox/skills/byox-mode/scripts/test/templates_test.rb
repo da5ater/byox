@@ -132,4 +132,42 @@ class TemplatesTest < Minitest::Test
     assert_includes out, "command: aws s3api head-bucket --bucket corsego-uploads"
     assert_includes out, "HeadBucket operation: Not Found"
   end
+
+  def rspec_step(env, *args, chdir:)
+    Open3.capture2e(env, "sh", File.join(TEMPLATES, "rspec-step.sh"), *args, chdir:)
+  end
+
+  def rails_like(test_db)
+    app = File.join(@dir, "api")
+    FileUtils.mkdir_p(File.join(app, "config"))
+    FileUtils.mkdir_p(File.join(app, "spec"))
+    File.write(File.join(app, "config/database.yml"), "test:\n  database: #{test_db}\n")
+    File.write(File.join(app, "spec/rails_helper.rb"), "")
+    app
+  end
+
+  def test_the_rspec_template_refuses_a_test_database_not_named_byox
+    app = rails_like("company_production")
+    out, status = rspec_step({ "BYOX_COURSE" => @dir }, "01.1", chdir: app)
+    refute status.success?
+    assert_match(/company_production/, out)
+    assert_match(/Nothing was run/, out)
+  end
+
+  def test_the_rspec_template_refuses_a_database_url_not_named_byox
+    app = rails_like("byox_api_test")
+    out, status = rspec_step({ "BYOX_COURSE" => @dir, "DATABASE_URL" => "postgres://localhost/company_production" }, "01.1", chdir: app)
+    refute status.success?
+    assert_match(/DATABASE_URL/, out)
+  end
+
+  def test_the_rspec_template_finds_a_named_project_or_says_it_is_missing
+    app = rails_like("company_production")
+    out, status = rspec_step({ "BYOX_COURSE" => @dir, "BYOX_PROJECT_API" => app }, "01.1", "api", chdir: @dir)
+    refute status.success?
+    assert_match(/company_production/, out, "it ran the guard inside the api project")
+    out, status = rspec_step({ "BYOX_COURSE" => @dir }, "01.1", "worker", chdir: @dir)
+    assert_equal 2, status.exitstatus
+    assert_match(/BYOX_PROJECT_WORKER/, out)
+  end
 end

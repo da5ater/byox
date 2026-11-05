@@ -5,7 +5,7 @@ Every step's `verify` field names one shell command, usually `sh "$BYOX_COURSE/v
 ## Rules for every recipe
 
 - **Idempotent.** Running it twice gives the same result. Install only when missing (`bundle check || bundle install`). Reset the test database (`bin/rails db:test:prepare`).
-- **Fast.** A verify should finish in seconds. Run only the step's own tests.
+- **Fast.** A verify should finish in seconds. Run only the step's own tests. Wrap any test that waits, such as threads, locks, servers or sockets, in a timeout of 60 seconds or less, so a hang fails red instead of stalling the run.
 - **Visible.** All tests live in `$BYOX_COURSE/tests/<step>/`. There are no hidden tests.
 - **Random values.** Anything a learner could hardcode comes from `SecureRandom`, `rand`, Faker or `$RANDOM`. Lint fails a test dir with no random source.
 - **Strong.** The tests must fail on the solution at the previous tag and pass at this step's tag. `byox strength` checks it. Only `kind: cloud` steps are exempt.
@@ -17,7 +17,7 @@ Every step's `verify` field names one shell command, usually `sh "$BYOX_COURSE/v
 
 | kind | Recipe |
 |---|---|
-| `backend` | Request or model tests in the course's framework. Rails with RSpec: `bundle exec rspec "$BYOX_COURSE/tests/<step>"`. Add a support file under `course/support/` for shared helpers such as Devise sign in. |
+| `backend` | Request or model tests in the course's framework. Rails with RSpec: copy `templates/rspec-step.sh` to `course/support/rspec_step.sh` and call `sh "$BYOX_COURSE/support/rspec_step.sh" <step> [project]`. It loads `rails_helper` by copying the specs into `spec/byox/<step>`, runs them under a timeout, and refuses a test database not named `byox_<project>_test`, so the learner's real databases are never touched. Shared helpers, such as Devise sign in or a thread helper, go in `course/support/`, never copied between `tests/<step>/` folders. |
 | `cli` | Feed input on stdin and compare stdout, or run a client script against the learner's server. Keep `N.in` and `N.out` files in the test dir when the output is fixed, and generate input in the test when it must be random. |
 | `ui` | Browser tests that click, fill and read the page. Rails system tests or Playwright. Assert on visible text and roles, not CSS classes. |
 | `visual` | The learner builds a page from a design. `references/frontend-design.md` says where the design comes from and how it is handed over. Verify starts the learner's app, screenshots it, and pixel-diffs it against `course/tests/<step>/target.png`, and against `target-phone.png` when there is one. Start from `templates/verify-visual.sh`. For a design made in Penpot set `COARSE=8`, because Penpot and Chrome draw text differently. The site shows the target next to the step and the red diff after a failed verify. |
