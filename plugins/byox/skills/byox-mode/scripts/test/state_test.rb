@@ -76,4 +76,12 @@ class StateTest < Minitest::Test
     assert_includes note, "| 01-ping Talk over stdin | open | 0/2 | 0 | 8 |"
     assert_includes note, "8 verify attempts on 01.1."
   end
+
+  def test_progress_leaves_out_lessons_still_building
+    assert_equal 4, ST.progress(@outline, S.empty)["total"]
+    path = File.join(@root, "mini-redis/course/course.md")
+    File.write(path, File.read(path).sub("  - id: 02-store\n", "  - id: 02-store\n    building: true\n"))
+    outline = Fixture.course(@root).outline
+    assert_equal({ "done" => 0, "total" => 2 }, ST.progress(outline, S.empty))
+  end
 end

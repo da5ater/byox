@@ -75,7 +75,7 @@ module Byox
     def current_lesson(outline, state) = outline.find { lesson(outline, state, _1.id) == :open }
 
     def progress(outline, state)
-      ids = outline.flat_map { |l| l.steps.map(&:id) }
+      ids = outline.reject(&:building).flat_map { |l| l.steps.map(&:id) }
       { "done" => ids.count { step_green?(state, _1) }, "total" => ids.size }
     end
 
