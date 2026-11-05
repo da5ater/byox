@@ -17,7 +17,7 @@ Trace each friction point to its cause in byox: a lesson-format rule that is mis
 
 Where did compiling, reviewing or running a course go wrong, and what did a person have to fix by hand?
 
-- Lint, strength and audit findings left in a compiled or approved course, such as steps with no tests, lessons with no resources, or a course stuck before `compiled`.
+- Lint, strength and review findings left in a compiled or approved course, such as steps with no tests, lessons with no resources, or a course stuck before `compiled`.
 - In sessions: retries, tool errors, commands that failed on this machine, steps the lead agent had to do itself because an agent file or playbook was wrong or silent, agents that disagreed, and work redone.
 - Agent budget overshoot, and a step that cost far more tokens than it should.
 - Machine and stack surprises: NTFS file modes, the wrong Ruby, a CLI bound to another runtime, a generator that already did the mentor's manual step.

@@ -128,11 +128,18 @@ module MiniRedis
       target: Ruby 3.4
       ported: false
       test: minitest
+      confirmed: true
       choices:
         language: ruby
         architecture: one program
         design: none
     services: []
+    plan:
+      goals: [build a key-value server]
+      hours_per_week: 3
+      style: build it myself
+      strategy: follow the article in order
+      batches: [{name: core, lessons: [01-ping, 02-store]}]
     lessons:
       - id: 01-ping
         title: Talk over stdin
@@ -375,6 +382,7 @@ module MiniRedis
     course_md = course_md.sub("layout: split\n", "layout: split\nprojects:\n  - {name: api, source: \".\", description: The Ruby program}\n  - {name: client, source: client, description: A tiny second project}\n") if two
     write(File.join(c, "course.md"), course_md)
     write(File.join(c, ".gitignore"), "solution/\nstate.json\n.cache/\n")
+    LESSONS.each_key { write(File.join(c, "reviews", "#{_1}.md"), "verdict: ship\n") }
     LESSONS.each do |id, text|
       text = text.gsub(/verify: sh course\/verify\/([\d.]+)\.sh/, 'verify: sh "$BYOX_COURSE/verify/\1.sh"') if split
       write(File.join(c, "lessons", "#{id}.md"), text)

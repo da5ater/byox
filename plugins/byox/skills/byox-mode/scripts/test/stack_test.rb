@@ -78,4 +78,44 @@ class StackTest < Minitest::Test
     make_ui
     assert_empty findings(:design_canvas)
   end
+
+  def test_an_unconfirmed_stack_is_flagged
+    edit("course/course.md") { _1.sub("  confirmed: true\n", "") }
+    msgs = findings(:stack)
+    assert(msgs.any? { _1.include?("stack.confirmed") }, msgs.inspect)
+  end
+
+  def test_a_missing_services_list_is_flagged
+    edit("course/course.md") { _1.sub("services: []\n", "") }
+    msgs = findings(:stack)
+    assert(msgs.any? { _1.include?("services:") }, msgs.inspect)
+  end
+
+  def test_stand_ins_with_known_kinds_and_modes_pass
+    edit("course/course.md") { _1.sub("services: []", "services:\n  - {name: Payments API, kind: service, mode: stub}\n  - {name: internal auth gem, kind: library, mode: learner_writes}") }
+    assert_empty findings(:stack)
+  end
+
+  def test_an_unknown_mode_or_kind_is_named
+    edit("course/course.md") { _1.sub("services: []", "services:\n  - {name: Mailer, kind: thing, mode: magic}") }
+    msgs = findings(:stack)
+    assert(msgs.any? { _1.include?("magic") }, msgs.inspect)
+    assert(msgs.any? { _1.include?("thing") }, msgs.inspect)
+  end
+
+  def test_the_plan_from_the_intake_passes
+    assert_empty findings(:plan)
+  end
+
+  def test_a_missing_plan_or_plan_key_is_named
+    edit("course/course.md") { _1.sub(/^  strategy: .*\n/, "") }
+    assert(findings(:plan).any? { _1.include?("plan.strategy") })
+    edit("course/course.md") { _1.sub(/^plan:\n(  .*\n)+/, "") }
+    assert(findings(:plan).any? { _1.include?("plan: is missing") })
+  end
+
+  def test_a_draft_course_needs_no_plan
+    edit("course/course.md") { _1.sub(/^plan:\n(  .*\n)+/, "").sub("status: compiled", "status: draft") }
+    assert_empty findings(:plan)
+  end
 end

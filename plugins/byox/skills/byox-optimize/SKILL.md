@@ -1,6 +1,6 @@
 ---
 name: byox-optimize
-description: "Optimize byox from how it was really used. Reads every course's state, the feedback log, lint and audit results, and this project's Claude Code sessions that used byox. Two read-only reviewers and a synthesizer turn that into learnings, and each accepted one is routed to a concrete edit of a byox skill, playbook, agent, reference or script. Use for /byox-optimize, 'optimize byox', 'reflect on my byox work', 'what should byox do better'."
+description: "Optimize byox from how it was really used. Reads every course's state, the feedback log, lint results and lesson reviews, and this project's Claude Code sessions that used byox. Two read-only reviewers and a synthesizer turn that into learnings, and each accepted one is routed to a concrete edit of a byox skill, playbook, agent, reference or script. Use for /byox-optimize, 'optimize byox', 'reflect on my byox work', 'what should byox do better'."
 ---
 
 # byox optimize

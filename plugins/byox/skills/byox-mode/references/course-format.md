@@ -165,7 +165,7 @@ The precise spec, as a short list.
 - `goal` is two lines. It is shown on the course map.
 - Every step has `id`, `title`, `kind`, `verify`, `instructions` and exactly three `hints`. The parser rejects anything else, so the site never sees a step with two hints.
 - `verify` is one shell command run from the learner's `work/` folder. The site runs it and goes green on exit code 0. The learner could type it themselves.
-- `generators` lists commands like `bin/rails generate devise:install`. `generated` lists globs of the files they write, such as `db/migrate/*_devise_create_users.rb` or `test/**`. The solution view collapses those files, and the leak check ignores them.
+- `generators` lists commands like `bin/rails generate devise:install`. `generated` lists globs of the files they write, such as `db/migrate/*_devise_create_users.rb` or `test/**`. The solution view collapses those files, and the leak check ignores them. A glob ending in `/**` matches everything under that folder. Any other glob matches like `File.fnmatch` with `**` crossing folders.
 - Do not write gotchas. They did not help the learner. A course compiled earlier keeps its `gotchas` field, and the site still shows it.
 - `design_url` is optional. On a `visual` step, an https link to the design, such as a Penpot view link. The lesson page shows it as a button.
 - `read_first` is optional and holds at most two entries, each with `url`, `section` and `why`: what to read before this step, at the exact heading, and why this step needs it. Lint checks the links. See `skills/byox-read-first`.
@@ -198,7 +198,7 @@ Lessons unlock in order. Skip on a lesson unlocks the next one and its solution,
 
 ## Quality bar
 
-The auditor scores every lesson on these, 0 to 2 each. Every lesson must score 2 on R5, R6 and R7, and at least 14 of 16 overall, excluding R10. The numbering keeps its gaps so older audit reports stay readable. R10 must be 2.
+The lesson reviewer scores every lesson on these, 0 to 2 each, in `course/reviews/<id>.md`. Every lesson must score 2 on R5, R6 and R7, and at least 14 of 16 overall, excluding R10. The numbering keeps its gaps so older audit reports stay readable. R10 must be 2.
 
 | # | Dimension | What a 2 looks like |
 |---|---|---|

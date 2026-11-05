@@ -1,6 +1,6 @@
 # Stack wizard
 
-Run this at the very start of a compile, before the outline and before any lesson. It settles the folders, the stack and the architecture, because every step the learner reads names them. Use `AskUserQuestion`, at most 4 questions per call, with the recommended option first. Skip a question the source already answers, and say what you assumed. The learner can always pick Other and type their own.
+Run this at the very start of a compile, before the outline and before any lesson. It settles the folders, the stack and the architecture, because every step the learner reads names them. Use `AskUserQuestion`, at most 4 questions per call, with the recommended option first. Batch 1 Q2 and Batch 4 Q3 are always asked, even when the source answers them: put the detected answer first, labelled `(detected from source)`. They usually ride in round 2 of `learner-intake.md`. Skip any other question the source already answers, and say what you assumed. The learner can always pick Other and type their own.
 
 ## Batch 1: shape
 
@@ -25,7 +25,7 @@ Run this at the very start of a compile, before the outline and before any lesso
 
 1. **Test runner per project.** Default: the source's for a backend, Vitest for a Vite frontend.
 2. **Designs.** `penpot-diff`: a Penpot frame per UI step, checked by a coarse screenshot compare. `penpot`: a Penpot frame per UI step, checked by DOM tests only. `html`: a design built in plain HTML. `none`: text steps only. Anything but `none` means every `ui` or `visual` step needs a `design_url`, or a `design_exempt` reason, and `byox lint` enforces it.
-3. **External services.** Per service: real account, free tier, sandbox or stub.
+3. **Stand-ins.** List every external service (payments, email, storage, OAuth), every private or internal library the learner cannot install, and every sibling service the course does not build. Propose a mode for each: `real`, `free_tier`, `sandbox`, `stub`, or `learner_writes` (the learner builds a small version in a named lesson). Show it as one table, name, kind, mode and what the learner will see, and get a yes. Record each row in `services:` as `{name, kind: service|library, mode}`.
 
 ## Plan before any lesson
 
@@ -57,4 +57,4 @@ stack:
     design: penpot
 ```
 
-`language`, `architecture` and `design` are required. Add any other key a lesson depends on. Show the learner the recorded block and get a yes before the outline.
+`language`, `architecture` and `design` are required. Add any other key a lesson depends on. Show the learner the recorded block and the stand-ins table and get a yes before the outline. Then set `stack.confirmed: true`. Only the learner's yes sets it, and `byox lint` refuses an approved course without it or without a `services:` list (an empty list is fine).

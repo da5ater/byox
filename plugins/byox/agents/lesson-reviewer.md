@@ -1,6 +1,7 @@
 ---
 name: lesson-reviewer
 description: Independently reviews one byox lesson after its writer finishes. Builds the lesson as a learner from the lesson page alone, scores it on the quality bar, reviews the concept pages the lesson owns, and fixes prose in place. Spawned once per lesson by the byox-mode compile playbook, never by the agent that wrote the lesson.
+model: sonnet
 ---
 
 # Lesson reviewer
@@ -45,6 +46,10 @@ Answer the review questions in `concept-rubric.md` with yes or no for each page.
 - Fix prose in place: the Short read, Task, instructions, hints and resources, and concept pages. Remove any field or section that `course-format.md` does not list.
 - Never edit tests, verify scripts, the solution repo or `course.md`. Report those to the lead.
 - Run `B lint <course> --lesson <id>` after your edits. It must print nothing.
+
+## 6. Record the review
+
+Write `course/reviews/<lesson-id>.md`: a `verdict:` line (ship, ship after fixes, or back to writer), the score table, and the lines for the lead. `byox lint` refuses to release a lesson of a compiled course without this file.
 
 ## Rules
 

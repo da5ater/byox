@@ -8,6 +8,7 @@ The vault folder is `vault:` in `<root>/byox.yml`. The default is `<root>/vault`
 vault: ~/Obsidian/MyVault/byox
 agent_cmd: claude -p
 upstream: da5ater/byox        # where feedback pull requests go
+private: true                 # optional: no feedback pull requests from this root, for work or private code
 plugin_repo: ~/code/byox      # optional local checkout of byox, used to ship feedback
 ```
 
@@ -39,9 +40,21 @@ The site regenerates it whole from `course/state.json` after every state change.
 
 - Authentication and authorization
 - Background jobs
+
+## Goals
+
+- Take tickets alone in this codebase
+
+## Pace
+
+- 6 hours a week
+
+## Style
+
+- Build it myself
 ```
 
-Writers and reviewers read it to skip what the learner knows. The site never writes it.
+Writers and reviewers read it to skip what the learner knows and to aim each lesson at the goals. `references/learner-intake.md` fills Goals, Pace and Style. The site never writes it.
 
 ## resource-blocklist.md
 

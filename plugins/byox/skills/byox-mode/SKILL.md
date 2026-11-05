@@ -51,7 +51,7 @@ Paths:
 
 ## Agent budget
 
-Two agents per lesson, one `lesson-writer` and then one `lesson-reviewer`, plus one `course-auditor` per course. The reviewer never wrote the lesson it reviews. Deep dives are the exception, because `byox-teach` runs `byox-how` and `byox-why` from your own session. Per concept page, `byox-how` spawns one explainer, or two to four explorers and an explainer, and `byox-why` spawns one investigator per available evidence source and a synthesizer. Writers and reviewers spawn none. Fixes after the audit happen in your own session. At runtime the site runs the `coach`, and the `lesson-writer` or `fix-lesson` headless, one job per course at a time.
+One `lesson-writer` per lesson, or per two lessons in a ported course, and one `lesson-reviewer` per lesson, which runs on a lighter model beside the next writer. The reviewer never wrote the lesson it reviews. Deep dives are the exception, because `byox-teach` runs `byox-how` and `byox-why` from your own session. Per concept page, `byox-how` spawns one explainer, or two to four explorers and an explainer, and `byox-why` spawns one investigator per available evidence source and a synthesizer. Writers and reviewers spawn none. Fixes after a review happen in your own session. At runtime the site runs the `coach`, and the `lesson-writer` or `fix-lesson` headless, one job per course at a time.
 
 ## Who writes what
 
@@ -62,7 +62,8 @@ Two agents per lesson, one `lesson-writer` and then one `lesson-reviewer`, plus 
 | `<vault>/Concepts/<slug>.md` | You, the lead, with `byox-teach` after the owner lesson's writer returns. Then that lesson's reviewer. Later, Unclear. |
 | `course/solution/` | `byox new` and `byox tag`, called by you or by the writer in port mode |
 | `course/state.json`, `<vault>/Courses/<slug>.md`, `<vault>/resource-blocklist.md` | The site only. `byox sync` regenerates the course notes. |
-| `course/audit.md` | The course auditor |
+| `course/reviews/<id>.md` | That lesson's reviewer |
+| `course/brief.md` | You, the lead, once before the writers |
 
 ## Commands
 

@@ -150,7 +150,7 @@ ruby plugins/byox/skills/byox-mode/scripts/test/fixtures/make_mini_redis.rb /tmp
 ruby plugins/byox/skills/byox-mode/scripts/byox site --root /tmp/byox-demo
 ```
 
-The plugin lives in `plugins/byox/`. `skills/byox-mode/` holds the entry skill, its playbooks and references, and the `byox` executable. `agents/` holds the lesson writer, the lesson reviewer, the course auditor, the coach and the feedback agent.
+The plugin lives in `plugins/byox/`. `skills/byox-mode/` holds the entry skill, its playbooks and references, and the `byox` executable. `agents/` holds the lesson writer, the lesson reviewer, the coach and the feedback agent.
 
 ## Roadmap
 

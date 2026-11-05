@@ -151,4 +151,23 @@ class PluginTest < Minitest::Test
     assert_includes File.read(File.join(PLUGIN, "skills/byox-mode/playbooks/compile.md")), "project folders"
     assert_match(/Name the folder in every instruction/, File.read(File.join(PLUGIN, "agents/lesson-writer.md")))
   end
+
+  def test_every_compile_playbook_runs_the_learner_intake_before_grouping
+    base = File.join(PLUGIN, "skills/byox-mode")
+    intake = File.read(File.join(base, "references/learner-intake.md"))
+    %w[AskUserQuestion hours_per_week strategy batches private].each { assert_includes intake, _1 }
+    %w[compile-transcript compile-repo compile-article].each do |name|
+      text = File.read(File.join(base, "playbooks/#{name}.md"))
+      assert text.index("learner-intake.md") < text.index("**Group"), "#{name} must run the intake before grouping"
+    end
+  end
+
+  def test_compile_briefs_writers_once_and_reviews_beside_the_next_writer
+    compile = File.read(File.join(PLUGIN, "skills/byox-mode/playbooks/compile.md"))
+    assert_includes compile, "course/brief.md"
+    assert_includes compile, "two consecutive lessons"
+    assert_match(/Never wait on a review/, compile)
+    refute_match(/course-auditor/, compile)
+    assert_match(/^model: sonnet$/, File.read(File.join(PLUGIN, "agents/lesson-reviewer.md")))
+  end
 end

@@ -23,7 +23,7 @@ module Byox
     def lint(course, config, lesson: nil, offline: false)
       ids = lesson ? [lesson] : course.outline.reject(&:building).map(&:id)
       findings = ids.flat_map { lint_lesson(course, config, _1, offline:) }
-      findings += outline_matches_files(course) + project_findings(course) + stack_findings(course) + audit_findings(course) + ui_kit_findings(course) unless lesson
+      findings += outline_matches_files(course) + project_findings(course) + stack_findings(course) + plan_findings(course) + review_findings(course) + ui_kit_findings(course) unless lesson
       findings
     end
 
@@ -39,29 +39,16 @@ module Byox
       e.problems.map { |check, msg| Finding.new(check, id, msg) }
     end
 
-    # course/audit.md names the lessons it covered on a `lessons:` line, and every table row
-    # ends in a status: open, fixed or wontfix: <reason>.
-    def audit_findings(course)
-      path = File.join(course.course_dir, "audit.md")
-      return [] unless course.status == "compiled" && File.file?(path)
+    # Every released lesson of a compiled course was read by a lesson-reviewer, which writes
+    # course/reviews/<lesson>.md. A lesson nobody reviewed stays building.
+    def review_findings(course)
+      return [] unless course.status == "compiled"
 
-      text = File.read(path)
-      out = []
-      scope = text[/^lessons:\s*(.+)$/, 1]
-      released = course.outline.reject(&:building).map(&:id)
-      if scope.nil?
-        out << Finding.new(:audit, "audit.md", "audit.md has no `lessons:` line naming the lessons it covered")
-      else
-        covered = scope.split(",").map(&:strip)
-        (released - covered).each { out << Finding.new(:audit, _1, "released lesson #{_1} is not covered by the audit: rerun the course-auditor") }
-      end
-      text.each_line do |line|
-        cells = line.split("|").map(&:strip)[1..-2]
-        next unless cells && cells.size >= 6 && cells.last.casecmp?("open")
+      course.outline.reject(&:building).filter_map do |l|
+        next if File.file?(File.join(course.course_dir, "reviews", "#{l.id}.md"))
 
-        out << Finding.new(:audit, cells[2], "audit row #{cells[0]} (#{cells[2]}) is still open: fix it, then mark it fixed or wontfix: <reason>")
+        Finding.new(:review, l.id, "#{l.id} is released but has no course/reviews/#{l.id}.md: run the lesson-reviewer, or mark the lesson building: true")
       end
-      out
     end
 
     # When the course picked a UI kit, the first step that draws UI installs it.
@@ -114,8 +101,11 @@ module Byox
 
     CHOICE_KEYS = %w[language architecture design].freeze
     DESIGNS = %w[penpot-diff penpot html none].freeze
+    SERVICE_MODES = %w[real free_tier sandbox stub learner_writes].freeze
+    SERVICE_KINDS = %w[service library].freeze
 
-    # The compile wizard settles these before any lesson is written.
+    # The compile wizard settles these before any lesson is written, and the learner confirms
+    # the stack and every stand-in. Only the learner's yes sets stack.confirmed.
     def stack_findings(course)
       return [] unless %w[approved compiled].include?(course.status)
 
@@ -125,7 +115,39 @@ module Byox
       out = (CHOICE_KEYS - choices.keys).map { Finding.new(:stack, "course.md", "stack.choices.#{_1} is missing") }
       design = choices["design"].to_s
       out << Finding.new(:stack, "course.md", "stack.choices.design #{design} must be one of #{DESIGNS.join(', ')}") unless design.empty? || DESIGNS.include?(design)
-      out
+      unless course.meta.dig("stack", "confirmed") == true
+        out << Finding.new(:stack, "course.md", "stack.confirmed is not true: show the learner the stack and the stand-ins table, ask with AskUserQuestion, then set it")
+      end
+      out + services_findings(course)
+    end
+
+    def services_findings(course)
+      services = course.meta["services"]
+      return [Finding.new(:stack, "course.md", "services: is missing: list every external service and private library the course fakes, stubs or rebuilds, or write services: []")] unless services.is_a?(Array)
+
+      services.each_with_index.flat_map do |svc, i|
+        name = svc.is_a?(Hash) ? svc["name"] : nil
+        where = name || "services[#{i}]"
+        next [Finding.new(:stack, where, "each service needs name and mode")] unless name && svc["mode"]
+
+        problems = []
+        problems << Finding.new(:stack, where, "service mode #{svc['mode']} must be one of #{SERVICE_MODES.join(', ')}") unless SERVICE_MODES.include?(svc["mode"].to_s)
+        problems << Finding.new(:stack, where, "service kind #{svc['kind']} must be one of #{SERVICE_KINDS.join(', ')}") if svc["kind"] && !SERVICE_KINDS.include?(svc["kind"].to_s)
+        problems
+      end
+    end
+
+    PLAN_KEYS = %w[goals hours_per_week strategy].freeze
+
+    # The learner intake (references/learner-intake.md) records the plan before the outline.
+    def plan_findings(course)
+      return [] unless %w[approved compiled].include?(course.status)
+
+      plan = course.meta["plan"]
+      return [Finding.new(:plan, "course.md", "plan: is missing: run the learner intake (references/learner-intake.md)")] unless plan.is_a?(Hash)
+
+      missing = PLAN_KEYS.select { |key| plan[key].nil? || plan[key] == [] || plan[key].to_s.strip.empty? }
+      missing.map { Finding.new(:plan, "course.md", "plan.#{_1} is missing: ask it in the learner intake") }
     end
 
     # With designs on, a UI step hands the learner a design to replicate.

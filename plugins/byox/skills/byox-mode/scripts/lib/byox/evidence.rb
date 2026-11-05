@@ -42,8 +42,9 @@ module Byox
       out.concat(notes.empty? ? ["- none"] : notes.map { |f| "- #{f['at']} #{f['kind']} #{[f['lesson'], f['step'], f['section']].compact.join('/')}: #{redact(f['note'] || f['url'])}" })
       out << ""
       out << lint_line(course, config)
-      audit = File.join(course.course_dir, "audit.md")
-      out.concat(["", "Audit (course/audit.md), first lines:", *File.readlines(audit).first(40).map { "> #{redact(_1.chomp)}" }]) if File.file?(audit)
+      Dir[File.join(course.course_dir, "reviews", "*.md")].sort.each do |review|
+        out.concat(["", "Review (course/reviews/#{File.basename(review)}), first lines:", *File.readlines(review).first(15).map { "> #{redact(_1.chomp)}" }])
+      end
       out << ""
     rescue FormatError => e
       ["## #{File.basename(dir)}", "", "This course does not parse: #{e.message}", ""]
