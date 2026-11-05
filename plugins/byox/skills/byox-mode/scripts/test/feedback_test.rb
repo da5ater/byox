@@ -149,6 +149,20 @@ class FeedbackUploadWithoutRepoTest < Minitest::Test
   def setup = start_site
   def teardown = stop_site
 
+  def test_a_private_root_never_sends_feedback_to_a_pull_request
+    @site.stop
+    File.open(File.join(@root, "byox.yml"), "a") { _1.puts("private: true") }
+    @site = Byox::Site.start(Fixture.config(@root), port: 0)
+    json(:post, "/api/feedback", { "text" => "Make the course map bigger", "page" => "#/" })
+    _, listed = json(:get, "/api/feedback")
+    assert_equal true, listed["private"]
+    %w[ship upload].each do |action|
+      code, err = json(:post, "/api/feedback/#{action}")
+      assert_equal 403, code, action
+      assert_match(/private/, err["error"])
+    end
+  end
+
   def test_upload_needs_a_local_checkout
     _, body = json(:get, "/api/feedback")
     assert_nil body["changes"]

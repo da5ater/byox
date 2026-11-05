@@ -9,13 +9,13 @@ module Byox
   BIN = File.expand_path("../../byox", __dir__)
 
   # byox.yml at the courses root. Read only, never written by byox.
-  Config = Data.define(:root, :vault, :agent_cmd, :plugin_repo, :upstream) do
+  Config = Data.define(:root, :vault, :agent_cmd, :plugin_repo, :upstream, :private) do
     def self.load(root = nil)
       root = File.expand_path(root || ENV["BYOX_ROOT"] || DEFAULT_ROOT)
       path = File.join(root, "byox.yml")
       raw = File.exist?(path) ? (YAML.safe_load_file(path) || {}) : {}
       new(root:, vault: File.expand_path(raw["vault"] || "vault", root), agent_cmd: (raw["agent_cmd"] || DEFAULT_AGENT_CMD).to_s,
-          plugin_repo: raw["plugin_repo"] && File.expand_path(raw["plugin_repo"], root), upstream: (raw["upstream"] || UPSTREAM).to_s)
+          plugin_repo: raw["plugin_repo"] && File.expand_path(raw["plugin_repo"], root), upstream: (raw["upstream"] || UPSTREAM).to_s, private: raw["private"] == true)
     end
 
     # A course dir sits directly under the root, so its parent holds byox.yml when one exists.

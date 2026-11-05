@@ -505,9 +505,9 @@ route();
 
 const fb = document.getElementById("fb");
 async function fbRefresh() {
-  const { items, changes } = await api("/api/feedback");
+  const { items, changes, private: isPrivate } = await api("/api/feedback");
   const box = fb.querySelector(".fb-changes");
-  box.hidden = changes === null || changes === undefined;
+  box.hidden = isPrivate || changes === null || changes === undefined;
   box.querySelector("p").textContent = changes ? `${changes} changed file${changes === 1 ? "" : "s"} in your byox checkout, not uploaded yet.` : "Your byox checkout has no changes.";
   box.querySelector("[data-upload]").disabled = !changes;
   const open = items.filter((i) => i.status === "open");
@@ -515,7 +515,8 @@ async function fbRefresh() {
   fb.querySelector(".fb-list").innerHTML = open.map((i) => `<li>${esc(i.text)} <span class="muted">${esc(i.page)}</span></li>`).join("")
     + shipped.slice(-3).map((i) => `<li class="muted">${esc(i.text)} <a href="${esc(i.pr)}" target="_blank" rel="noopener">pull request</a></li>`).join("");
   const ship = fb.querySelector("[data-ship]");
-  ship.disabled = open.length === 0;
+  ship.hidden = isPrivate;
+  ship.disabled = isPrivate || open.length === 0;
   ship.textContent = open.length ? `Send ${open.length} to a pull request` : "Nothing to send";
 }
 document.getElementById("fb-open").onclick = async () => { await fbRefresh(); fb.showModal(); fb.querySelector("textarea").focus(); };

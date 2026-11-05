@@ -363,9 +363,14 @@ module Byox
                                                     failure_path: nil, target: nil))
       end
 
-      def feedback_list(_req) = Http.json(200, { "items" => Feedback.all(@config).map(&:to_h), "changes" => Feedback.changes(@config) })
+      def feedback_list(_req) = Http.json(200, { "items" => Feedback.all(@config).map(&:to_h), "changes" => Feedback.changes(@config), "private" => @config.private })
+
+      PRIVATE = "this courses root is private (private: true in byox.yml): feedback stays on this machine, nothing is sent to a pull request"
+
 
       def feedback_upload(_req)
+        return Http.json(403, { "error" => PRIVATE }) if @config.private
+
         changes = Feedback.changes(@config)
         return Http.json(409, { "error" => "set plugin_repo in byox.yml to your byox checkout first" }) if changes.nil?
         return Http.json(409, { "error" => "your byox checkout has no changes to upload" }) if changes.zero?
@@ -382,6 +387,7 @@ module Byox
       end
 
       def feedback_ship(_req)
+        return Http.json(403, { "error" => PRIVATE }) if @config.private
         return Http.json(409, { "error" => "there is no open feedback to ship" }) if Feedback.open(@config).empty?
 
         agent_job(:feedback, :feedback, JobInput.new(course: nil, config: @config, lesson: nil, step: nil, section: nil,
