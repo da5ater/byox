@@ -10,6 +10,7 @@ Every step's `verify` field names one shell command, usually `sh "$BYOX_COURSE/v
 - **Random values.** Anything a learner could hardcode comes from `SecureRandom`, `rand`, Faker or `$RANDOM`. Lint fails a test dir with no random source.
 - **Strong.** The tests must fail on the solution at the previous tag and pass at this step's tag. `byox strength` checks it. Only `kind: cloud` steps are exempt.
 - **Readable failure.** The first failing line says what was expected and what came back.
+- **Client-neutral fakes.** When `stack.choices.http_client` is not `fetch`, fake the network below the client (msw or a local server). Never replace the global `fetch`. `byox lint` flags it as `client_agnostic_tests`.
 
 - **Folders by variable.** With several projects, a script runs in the first and reaches the rest through `$BYOX_PROJECT_<NAME>`. Never `cd ../frontend`.
 

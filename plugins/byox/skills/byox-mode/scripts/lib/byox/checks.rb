@@ -34,7 +34,7 @@ module Byox
       l = Lesson.parse(path)
       [*outline_matches_lesson(course, l), *tests_exist(course, l), *random_values_in_tests(course, l),
        *hint3_no_solution(course, l), *no_solution_leak(course, l), *resources(config, l),
-       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l), *step_size(l), *short_read_size(l), *item_size(l)]
+       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l), *step_size(l), *short_read_size(l), *item_size(l), *client_agnostic_tests(course, l)]
     rescue FormatError => e
       e.problems.map { |check, msg| Finding.new(check, id, msg) }
     end
@@ -96,6 +96,23 @@ module Byox
         next unless count > MAX_STEP_ITEMS
 
         Finding.new(:step_size, s.id, "#{s.id} has #{count} numbered instructions, the limit is #{MAX_STEP_ITEMS}: split it at a checkpoint or into two steps")
+      end
+    end
+
+    # A test that replaces the global fetch only sees one client. A learner who picked axios fails it.
+    CLIENT_STUB = /stubGlobal\(\s*['"]fetch['"]|(?:global|globalThis|window)\.fetch\s*=|spyOn\(\s*(?:global|globalThis|window)\s*,\s*['"]fetch['"]|XMLHttpRequest\s*=[^=]/
+    CLIENT_TEST_FILES = %w[.js .jsx .ts .tsx .mjs .cjs].freeze
+
+    # Applies only when the course records a client other than fetch in stack.choices.http_client.
+    # Fake the network below the client (msw, a local server) so the tests pass whichever client is used.
+    def client_agnostic_tests(course, lesson)
+      client = course.meta.dig("stack", "choices", "http_client").to_s
+      return [] if client.empty? || client == "fetch"
+
+      lesson.steps.flat_map do |s|
+        test_files(course, s).select { CLIENT_TEST_FILES.include?(File.extname(_1)) && File.read(_1).match?(CLIENT_STUB) }.map do |f|
+          Finding.new(:client_agnostic_tests, s.id, "#{f.delete_prefix("#{course.dir}/")} fakes fetch directly, but the learner's client is #{client}. Fake the network below the client instead (msw or a local server)")
+        end
       end
     end
 
