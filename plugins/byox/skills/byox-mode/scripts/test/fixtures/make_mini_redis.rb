@@ -136,6 +136,7 @@ module MiniRedis
     services: []
     plan:
       goals: [build a key-value server]
+      roles: [backend]
       hours_per_week: 3
       style: build it myself
       strategy: follow the article in order
@@ -185,12 +186,13 @@ module MiniRedis
         - url: https://redis.io/docs/latest/develop/reference/protocol-spec/
           section: "Sending commands to a Redis server"
           why: Shows the request and reply cycle this lesson copies with plain lines.
-        - url: https://ruby-doc.org/3.4/IO.html
+        - url: https://www.rubyguides.com/2015/05/working-with-files-ruby/
           section: "Line IO"
           why: Lists the methods that read stdin one line at a time.
       steps:
         - id: "01.1"
           title: Reply to PING
+          read_first: []
           kind: cli
           verify: sh course/verify/01.1.sh
           generators: []
@@ -209,6 +211,7 @@ module MiniRedis
             - "Compare the upcased first word with `\\"PING\\"` and `puts` the reply. Set `$stdout.sync`."
         - id: "01.2"
           title: Echo a word back
+          read_first: []
           kind: cli
           verify: sh course/verify/01.2.sh
           generators: []
@@ -254,15 +257,16 @@ module MiniRedis
         reconstructed: false
       concepts: [key-value-store]
       resources:
-        - url: https://redis.io/docs/latest/commands/set/
+        - url: https://redis.io/docs/latest/develop/data-types/strings/
           section: "SET, return information"
           why: The exact reply the real command gives.
-        - url: https://ruby-doc.org/3.4/Hash.html
+        - url: https://www.rubyguides.com/2020/05/ruby-hash-methods/
           section: "Methods for fetching"
           why: The hash methods that give a default for a missing key.
       steps:
         - id: "02.1"
           title: SET and GET
+          read_first: []
           kind: cli
           verify: sh course/verify/02.1.sh
           generators: []
@@ -279,6 +283,7 @@ module MiniRedis
             - "Use `fetch` with `\\"(nil)\\"` as the default for GET."
         - id: "02.2"
           title: DEL removes a key
+          read_first: []
           kind: cli
           verify: sh course/verify/02.2.sh
           generators: []

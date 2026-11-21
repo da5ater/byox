@@ -122,7 +122,7 @@ class VisualSiteTest < Minitest::Test
   def teardown = stop_site
 
   def set_kind(step, kind)
-    Fixture.edit_lesson(@root, "01-ping") { |t| t.sub(/(- id: ["']?#{Regexp.escape(step)}["']?\n\s*title: [^\n]*\n\s*kind: )\w+/) { "#{$1}#{kind}" } }
+    Fixture.edit_lesson(@root, "01-ping") { |t| t.sub(/(- id: ["']?#{Regexp.escape(step)}["']?\n\s*title: [^\n]*\n(?:\s*read_first: \[\]\n)?\s*kind: )\w+/) { "#{$1}#{kind}" } }
   end
 
   def test_a_ui_step_shows_a_design_image_when_it_has_one
@@ -210,7 +210,7 @@ class DesignLinkTest < Minitest::Test
   def teardown = stop_site
 
   def add_field(line)
-    Fixture.edit_lesson(@root, "01-ping") { |t| t.sub(/(- id: ["']?01\.1["']?\n\s*title: [^\n]*\n)(\s*)kind: cli/) { "#{$1}#{$2}kind: visual\n#{$2}#{line}" } }
+    Fixture.edit_lesson(@root, "01-ping") { |t| t.sub(/(- id: ["']?01\.1["']?\n\s*title: [^\n]*\n(?:\s*read_first: \[\]\n)?)(\s*)kind: cli/) { "#{$1}#{$2}kind: visual\n#{$2}#{line}" } }
   end
 
   def test_a_step_can_link_to_its_design_in_penpot

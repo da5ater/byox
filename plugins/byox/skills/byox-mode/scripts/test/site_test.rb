@@ -93,7 +93,7 @@ class SiteTest < Minitest::Test
     first = l["resource"]["url"]
     assert_equal 400, json(:post, api("/lessons/01-ping/bad-resource"), { "url" => "https://example.com" })[0]
     code, body = json(:post, api("/lessons/01-ping/bad-resource"), { "url" => first })
-    assert_equal [200, "https://ruby-doc.org/3.4/IO.html"], [code, body["resource"]["url"]]
+    assert_equal [200, "https://www.rubyguides.com/2015/05/working-with-files-ruby/"], [code, body["resource"]["url"]]
     assert_includes File.read(File.join(@root, "vault", "resource-blocklist.md")), "- #{first} | "
   end
 

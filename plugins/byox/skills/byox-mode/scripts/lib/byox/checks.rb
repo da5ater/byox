@@ -34,7 +34,8 @@ module Byox
       l = Lesson.parse(path)
       [*outline_matches_lesson(course, l), *tests_exist(course, l), *random_values_in_tests(course, l),
        *hint3_no_solution(course, l), *no_solution_leak(course, l), *resources(config, l),
-       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l), *step_size(l), *short_read_size(l), *item_size(l), *client_agnostic_tests(course, l)]
+       *links_resolve(l, offline:), *concept_pages(config, l), *project_refs(course, l), *design_canvas(course, l), *step_size(l), *short_read_size(l), *item_size(l), *client_agnostic_tests(course, l),
+       *reference_docs(l), *deferred_wording(l), *read_first_given(l)]
     rescue FormatError => e
       e.problems.map { |check, msg| Finding.new(check, id, msg) }
     end
@@ -60,6 +61,43 @@ module Byox
       return [] if first.nil? || first.generators.any? { _1.downcase.include?(kit) }
 
       [Finding.new(:ui_kit, first.id, "#{first.id} is the first UI step but does not install #{kit}: install the UI kit there and build with its components, never plain markup first")]
+    end
+
+    # Manuals, API references and specs are written for people who already know the idea. A learner
+    # reads a teaching page: a tutorial, a well known blog post, a book chapter.
+    REFERENCE_DOCS = [
+      %r{postgresql\.org/docs}, %r{dev\.mysql\.com/doc}, %r{sqlite\.org/(lang|c3ref)}, %r{api\.rubyonrails\.org},
+      %r{ruby-doc\.org}, %r{rubydoc\.info}, %r{docs\.ruby-lang\.org}, %r{datatracker\.ietf\.org}, %r{rfc-editor\.org},
+      %r{docs\.python\.org/3/(library|reference)}, %r{pkg\.go\.dev}, %r{developer\.mozilla\.org/[^/]+/docs/Web/API/},
+      %r{redis\.io/(docs/latest/)?commands}, %r{docs\.oracle\.com}
+    ].freeze
+
+    def reference_docs(lesson)
+      (lesson.resources + lesson.steps.flat_map(&:read_first)).filter_map do |r|
+        next unless REFERENCE_DOCS.any? { r.url.match?(_1) }
+
+        Finding.new(:reference_docs, lesson.id, "#{r.url} is a manual or reference, too technical to learn from: pick a teaching page (a tutorial, a known blog post, a book chapter) per references/resource-rules.md")
+      end
+    end
+
+    # A course grows ring by ring and drops nothing. A feature the slim version does not build yet
+    # is named with the ring it comes in, never "left out".
+    DEFERRED = /\b(leave|leaves|leaving|left)\s+(\w+\s+){0,2}out\b|\bout of scope\b|\bwe (skip|drop|ignore)\b/i
+
+    def deferred_wording(lesson)
+      texts = { lesson.id => lesson.sections.values.join("\n") }
+      lesson.steps.each { texts[_1.id] = ([_1.instructions] + _1.hints).join("\n") }
+      texts.filter_map do |where, text|
+        hit = text[DEFERRED]
+        Finding.new(:deferred_wording, where, "says \"#{hit}\": nothing is left out of a byox course. Say which ring it comes in, such as \"comes in ring 2\", and the lead lists it under deferred: in course.md") if hit
+      end
+    end
+
+    # Every step decides what to read before it. read_first: [] is an explicit "nothing to read".
+    def read_first_given(lesson)
+      lesson.steps.reject(&:read_first_given).map do |s|
+        Finding.new(:read_first, s.id, "#{s.id} has no read_first field: give one or two teaching pages for this step (skills/byox-read-first), or write read_first: [] when it needs none")
+      end
     end
 
     MAX_SHORT_READ_WORDS = 200
@@ -154,7 +192,7 @@ module Byox
       end
     end
 
-    PLAN_KEYS = %w[goals hours_per_week strategy].freeze
+    PLAN_KEYS = %w[goals roles hours_per_week strategy].freeze
 
     # The learner intake (references/learner-intake.md) records the plan before the outline.
     def plan_findings(course)

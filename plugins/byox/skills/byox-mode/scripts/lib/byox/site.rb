@@ -176,9 +176,15 @@ module Byox
           "design" => image_url(c, "course/tests/#{s.id}/target.png"),
           "design_url" => s.design_url,
           "read_first" => s.read_first.map { |r| { "url" => r.url, "section" => r.section, "why" => r.why } },
+          "real_code" => (real_code_open?(c, s, state) ? s.real_code.map { |r| { "url" => r.url, "label" => r.label } } : []),
           "design_phone" => image_url(c, "course/tests/#{s.id}/target-phone.png"),
           "design_source" => (s.kind == "visual" && File.file?(File.join(c.dir, "course/design/#{s.id}/design.html")) ? "course/design/#{s.id}/design.html" : nil),
           "diff" => (s.kind == "visual" ? image_url(c, "course/.cache/diff-#{s.id}.png") : nil) }
+      end
+
+      # The real code is the answer key, so it opens only once the step is green or the lesson is skipped.
+      def real_code_open?(c, s, state)
+        Status.step(c.outline, state, s.id) == :green || Status.solution_unlocked?(c.outline, state, c.outline.find { |l| l.steps.any? { _1.id == s.id } }.id)
       end
 
       def image_url(c, rel) = File.file?(File.join(c.dir, rel)) ? "/api/courses/#{c.slug}/files/#{rel}" : nil

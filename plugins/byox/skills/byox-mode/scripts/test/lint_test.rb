@@ -57,7 +57,7 @@ class LintTest < Minitest::Test
   end
 
   def test_links_resolve_offline_rejects_malformed_urls
-    Fixture.edit_lesson(@root, "01-ping") { _1.sub("https://ruby-doc.org/3.4/IO.html", "ruby-doc.org/IO") }
+    Fixture.edit_lesson(@root, "01-ping") { _1.sub("https://www.rubyguides.com/2015/05/working-with-files-ruby/", "rubyguides.com/files") }
     assert_finding(:links_resolve, "01-ping")
   end
 
@@ -78,7 +78,7 @@ class LintTest < Minitest::Test
     end
     Fixture.edit_lesson(@root, "01-ping") do
       _1.sub("https://redis.io/docs/latest/develop/reference/protocol-spec/", "http://127.0.0.1:#{port}/alive")
-        .sub("https://ruby-doc.org/3.4/IO.html", "http://127.0.0.1:#{port}/dead")
+        .sub("https://www.rubyguides.com/2015/05/working-with-files-ruby/", "http://127.0.0.1:#{port}/dead")
     end
     findings = lint(lesson: "01-ping", offline: false)
     _, _, msg = assert_finding(:links_resolve, "01-ping", findings)
@@ -89,7 +89,7 @@ class LintTest < Minitest::Test
   end
 
   def test_resources_need_two_and_none_blocklisted
-    File.write(File.join(@root, "vault", "resource-blocklist.md"), "- https://redis.io/docs/latest/commands/set/ | 2026-10-20 | mini-redis/02-store\n")
+    File.write(File.join(@root, "vault", "resource-blocklist.md"), "- https://redis.io/docs/latest/develop/data-types/strings/ | 2026-10-20 | mini-redis/02-store\n")
     _, _, msg = assert_finding(:resources, "02-store")
     assert_includes msg, "is on the blocklist"
   end

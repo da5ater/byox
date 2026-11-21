@@ -170,4 +170,15 @@ class PluginTest < Minitest::Test
     refute_match(/course-auditor/, compile)
     assert_match(/^model: sonnet$/, File.read(File.join(PLUGIN, "agents/lesson-reviewer.md")))
   end
+
+  def test_the_writing_rules_carry_the_learner_feedback
+    base = File.join(PLUGIN, "skills")
+    task = File.read(File.join(base, "byox-task-writing/SKILL.md"))
+    ["by field name", "fresh start of this step", "never Setup", "Write it the way the team wrote it", "which ring it comes in", "real_code"].each { assert_includes task, _1 }
+    assert_includes File.read(File.join(base, "byox-mode/references/resource-rules.md")), "commentary"
+    assert_includes File.read(File.join(base, "byox-mode/references/stack-wizard.md")), "Only the far end changes"
+    intake = File.read(File.join(base, "byox-mode/references/learner-intake.md"))
+    ["**Roles**", "When a ring is done"].each { assert_includes intake, _1 }
+    assert_includes File.read(File.join(base, "byox-mode/references/porting.md")), "never its history"
+  end
 end

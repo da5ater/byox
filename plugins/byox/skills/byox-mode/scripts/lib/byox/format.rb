@@ -22,8 +22,10 @@ module Byox
   CONCEPT_HEADINGS = ["The problem", "How it works", "A tiny example", "What ", "Diagrams"].freeze
 
   Resource = Data.define(:url, :section, :why)
+  # A link into the real codebase the course follows: a pull request, a commit, or a file at its lines.
+  RealCode = Data.define(:url, :label)
 
-  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values, :design_url, :design_exempt, :read_first) do
+  Step = Data.define(:id, :title, :kind, :verify, :generators, :generated, :instructions, :gotchas, :hints, :fixed_values, :design_url, :design_exempt, :read_first, :read_first_given, :real_code) do
     def tag = "step-#{id}"
     def tests_dir = "course/tests/#{id}"
   end
@@ -177,13 +179,20 @@ module Byox
         Resource.new(url: r["url"].to_s, section: r["section"].to_s, why: r["why"].to_s)
       end
       problems << [:front_matter, "#{where}: read_first has #{read_first.size} entries, at most 2"] if read_first.size > 2
+      real_code = Array(raw["real_code"]).map do |r|
+        r = {} unless r.is_a?(Hash)
+        problems << [:front_matter, "#{where}: real_code entry needs an https url"] unless r["url"].to_s.match?(%r{\Ahttps://\S+\z})
+        problems << [:front_matter, "#{where}: real_code entry needs a label"] if r["label"].to_s.strip.empty?
+        RealCode.new(url: r["url"].to_s, label: r["label"].to_s)
+      end
+      problems << [:front_matter, "#{where}: real_code has #{real_code.size} entries, at most 3"] if real_code.size > 3
       hints = Array(raw["hints"]).map(&:to_s)
       problems << [:three_hints, "#{where}: has #{hints.size} hints, needs 3"] unless hints.size == 3 && hints.none? { _1.strip.empty? }
       Step.new(id:, title: raw["title"].to_s, kind: raw["kind"].to_s, verify: raw["verify"].to_s,
                generators: Array(raw["generators"]).map(&:to_s), generated: Array(raw["generated"]).map(&:to_s),
                instructions: raw["instructions"].to_s, gotchas: raw["gotchas"].to_s, hints:,
                fixed_values: raw["fixed_values"].to_s.strip, design_url: (design_url.empty? ? nil : design_url),
-               design_exempt: raw["design_exempt"].to_s.strip, read_first:)
+               design_exempt: raw["design_exempt"].to_s.strip, read_first:, read_first_given: raw.key?("read_first"), real_code:)
     end
 
     def generated?(path, globs)
