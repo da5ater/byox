@@ -3,6 +3,51 @@
 const app = document.getElementById("app");
 const crumbs = document.getElementById("crumbs");
 const md = (s) => marked.parse(s || "");
+
+// Every code block and output gets a quiet copy button that shows on hover or focus.
+function addCopyButtons(root) {
+  root.querySelectorAll("pre").forEach((pre) => {
+    if (pre.parentElement.classList.contains("codewrap")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "codewrap";
+    pre.replaceWith(wrap);
+    wrap.append(pre);
+    const b = document.createElement("button");
+    b.className = "copy";
+    b.type = "button";
+    b.textContent = "Copy";
+    b.setAttribute("aria-label", "Copy this block");
+    wrap.append(b);
+  });
+}
+
+document.addEventListener("click", async (ev) => {
+  const b = ev.target.closest("button.copy");
+  if (!b) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  try {
+    await navigator.clipboard.writeText(b.parentElement.querySelector("pre").innerText);
+    b.textContent = "Copied";
+  } catch {
+    b.textContent = "Select and copy";
+  }
+  setTimeout(() => { b.textContent = "Copy"; }, 1500);
+}, true);
+
+// The contents tree marks the section you are reading.
+function trackContents(root) {
+  const links = new Map([...root.querySelectorAll(".toc [data-jump]")].map((b) => [b.dataset.jump, b]));
+  const targets = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+  const seen = new Set();
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => (e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id)));
+    const current = targets.find((t) => seen.has(t.id));
+    if (!current) return;
+    links.forEach((b, id) => b.classList.toggle("here", id === current.id));
+  }, { rootMargin: "0px 0px -70% 0px" });
+  targets.forEach((t) => io.observe(t));
+}
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const enc = encodeURIComponent;
 
@@ -158,14 +203,26 @@ function designHtml(s) {
   return `<div class="design">${fig(s.design, "Design, desktop 1280x800")}${fig(s.design_phone, "Design, phone 390x844")}${diff}</div>${penpot}${source}`;
 }
 
+function realCodeHtml(s) {
+  if (!s.real_code || !s.real_code.length) return "";
+  const items = s.real_code.map((r) => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label)}</a></li>`).join("");
+  return `<div class="realcode"><strong>See how the team built it</strong><ul>${items}</ul></div>`;
+}
+
 function stepHtml(s) {
   if (s.status === "locked") return `<div class="step locked" id="step-${esc(s.id)}"><h3><code>${esc(s.id)}</code> ${esc(s.title)}</h3><p>Locked. Finish the step before it.</p></div>`;
   const hints = s.hints.map((h, i) => `<div class="hint"><strong>Hint ${i + 1}.</strong> ${md(h)}</div>`).join("");
   const more = s.hints.length < s.hints_total ? `<button data-hint="${esc(s.id)}" data-n="${s.hints.length + 1}">Hint ${s.hints.length + 1} of ${s.hints_total}</button>` : "";
   const gens = s.generators.length ? `<p><strong>Run these generators.</strong> Their output is not code you type.</p><pre>${esc(s.generators.join("\n"))}</pre>` : "";
   const explain = s.last_exit && s.status !== "green" ? `<button data-explain="${esc(s.id)}">Explain failure</button>` : "";
+  const head = `<div class="row"><h3>${s.status === "green" ? `<span class="check">&#10003;</span>` : ""}<code>${esc(s.id)}</code> ${esc(s.title)}</h3><span class="spacer"></span>${unclearButton(`step ${s.id}`)}</div>`;
+  if (s.status === "green") {
+    return `<details class="step green" id="step-${esc(s.id)}"><summary>${head}</summary>
+    ${realCodeHtml(s)}${readFirstHtml(s)}${md(s.instructions)}${gens}${designHtml(s)}
+    <pre class="output" id="out-${esc(s.id)}" hidden></pre></details>`;
+  }
   return `<div class="step ${s.status}" id="step-${esc(s.id)}">
-    <div class="row"><h3>${s.status === "green" ? `<span class="check">&#10003;</span>` : ""}<code>${esc(s.id)}</code> ${esc(s.title)}</h3><span class="spacer"></span>${unclearButton(`step ${s.id}`)}</div>
+    ${head}
     <p class="muted"><code>${esc(s.verify)}</code></p>
     ${readFirstHtml(s)}${md(s.instructions)}${gens}${designHtml(s)}
     ${s.gotchas ? `<p><strong>Gotchas.</strong></p>${md(s.gotchas)}` : ""}
@@ -313,19 +370,23 @@ async function lesson(slug, id) {
     : `<p class="muted">Every resource for this lesson is on your blocklist. Press This lesson is broken to get a new one.</p>`;
   const concepts = l.concepts.map((c) => c.exists ? `<li><a href="#/concept/${enc(c.slug)}">${esc(c.slug)}</a></li>` : `<li class="muted">${esc(c.slug)} (missing)</li>`).join("");
   rememberCourse(slug);
-  const rail = l.steps.map((s) => `<li class="${s.status}"><button data-jump="${esc(s.id)}"><code>${esc(s.id)}</code>${esc(s.title)}</button></li>`).join("");
-  app.innerHTML = `<div class="lesson-page"><aside class="steprail" aria-label="Steps in this lesson"><p class="eyebrow">Steps</p><ol>${rail}</ol></aside><div class="content">
+  const stepItems = l.steps.map((s) => `<li class="${s.status}"><button data-jump="step-${esc(s.id)}"><code>${esc(s.id)}</code>${esc(s.title)}</button></li>`).join("");
+  const sec = (key, label, nested = "") => `<li><button data-jump="sec-${key}">${label}</button>${nested}</li>`;
+  const toc = `<ul class="toc">${sec("goal", "Goal")}${sec("short", "Short read")}${sec("task", "Task")}${sec("steps", "Steps", `<ol class="toc-steps">${stepItems}</ol>`)}${sec("reading", "Reading")}${sec("deep", "Go deep")}${sec("solution", "Mentor's solution")}</ul>`;
+  const byStep = l.steps.filter((s) => s.read_first && s.read_first.length).map((s) => `<li><button class="link" data-jump="step-${esc(s.id)}"><code>${esc(s.id)}</code></button> ${s.read_first.map((r) => `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.section)}</a>`).join(", ")}</li>`).join("");
+  const reading = `${resource}${byStep ? `<h3>Before each step</h3><ul class="bystep">${byStep}</ul>` : ""}`;
+  app.innerHTML = `<div class="lesson-page"><aside class="steprail" aria-label="Contents of this lesson"><p class="eyebrow">Contents</p>${toc}</aside><div class="content">
     <div class="row"><span class="badge ${l.status}">${esc(STATUS_LABEL[l.status] || l.status)}</span>${l.track === "ops" ? `<span class="badge">ops</span>` : ""}</div>
     <h1>${esc(l.title)}</h1>
     ${projectsHtml(l.projects)}
-    <h2>Goal</h2><div class="goal">${md(l.goal)}</div>
-    <h2>Short read ${unclearButton("short_read")}</h2>${md(l.sections.short_read)}
-    <h2>Task ${unclearButton("task")}</h2>${md(l.sections.task)}
+    <h2 id="sec-goal">Goal</h2><div class="goal">${md(l.goal)}</div>
+    <h2 id="sec-short">Short read ${unclearButton("short_read")}</h2>${md(l.sections.short_read)}
+    <h2 id="sec-task">Task ${unclearButton("task")}</h2>${md(l.sections.task)}
     <details><summary>Test code</summary>${tests}</details>
-    <h2>Steps</h2>${l.steps.map(stepHtml).join("")}
-    <h2>Resource</h2>${resource}
-    <h2>Go deep</h2><ul>${concepts || `<li class="muted">No concept pages.</li>`}</ul>
-    <h2>Mentor's solution</h2>
+    <h2 id="sec-steps">Steps</h2>${l.steps.map(stepHtml).join("")}
+    <h2 id="sec-reading">Reading</h2>${reading}
+    <h2 id="sec-deep">Go deep</h2><ul>${concepts || `<li class="muted">No concept pages.</li>`}</ul>
+    <h2 id="sec-solution">Mentor's solution</h2>
     <div id="solution">${l.solution_unlocked
       ? `<div class="row"><button data-solution>Show solution</button><button data-compare>Compare with my code</button></div>`
       : `<p class="muted">Locked until this lesson is green or skipped.</p>`}</div>
@@ -336,6 +397,8 @@ async function lesson(slug, id) {
     </div>
     <pre class="output" id="job" hidden></pre></div></div>`;
 
+  addCopyButtons(app);
+  trackContents(app);
   const ctx = { slug, id };
   helps.clear();
   setupHelpFab(ctx);
@@ -371,7 +434,9 @@ async function lesson(slug, id) {
       helps.delete(d.helpClose);
       renderHelp(d.helpClose);
     } else if (d.jump) {
-      document.getElementById(`step-${d.jump}`)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+      const target = document.getElementById(d.jump);
+      if (target && target.tagName === "DETAILS") target.open = true;
+      target?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     } else if (d.verify) {
       const out = document.getElementById(`out-${d.verify}`);
       out.hidden = false;
@@ -468,6 +533,7 @@ async function concept(slug) {
     <pre class="output" id="job" hidden></pre>`;
   [...app.querySelectorAll("h2")].slice(0, -1).forEach((h) => h.insertAdjacentHTML("beforeend", unclearButton(h.textContent)));
   renderMermaid(app);
+  addCopyButtons(app);
   app.onclick = async (ev) => {
     const section = ev.target.closest("button")?.dataset.unclear;
     const note = section && prompt(`What is unclear in ${section}?`);

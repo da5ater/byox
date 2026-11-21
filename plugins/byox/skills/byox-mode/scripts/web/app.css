@@ -122,6 +122,29 @@ button.link:hover { color: var(--brass); }
 .steprail button:hover, .steprail li.open button { color: var(--ink); }
 .steprail button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .steprail code { display: block; font-size: 12px; color: var(--muted); background: none; padding: 0; }
+.toc { list-style: none; margin: 0; padding: 0; }
+.toc > li { margin: 0 0 8px; padding: 0; }
+.toc > li::before { display: none; }
+.toc > li > button { all: unset; cursor: pointer; font-size: 13.5px; color: var(--muted); display: block; padding: 2px 0 2px 10px; border-left: 2px solid transparent; }
+.toc > li > button:hover { color: var(--ink); }
+.toc button.here { color: var(--ink); font-weight: 600; border-left-color: var(--brass); }
+.toc button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.toc .toc-steps { margin: 8px 0 4px 10px; }
+.toc .toc-steps button.here { color: var(--ink); }
+.codewrap { position: relative; }
+.codewrap:has(> pre[hidden]) { display: none; }
+.codewrap > .copy { position: absolute; top: 6px; right: 6px; font-size: 12px; padding: 2px 8px; opacity: 0; transition: opacity 120ms ease-out; }
+.codewrap:hover > .copy, .codewrap > .copy:focus-visible { opacity: 1; }
+@media (hover: none) { .codewrap > .copy { opacity: 0.7; } }
+details.step > summary { list-style: none; cursor: pointer; }
+details.step > summary::-webkit-details-marker { display: none; }
+details.step:not([open]) { padding-top: 10px; padding-bottom: 10px; }
+details.step:not([open]) h3 { margin: 0; font-size: 16px; color: var(--muted); }
+.realcode { background: var(--green-soft); border-radius: 8px; padding: 10px 14px; margin: 10px 0 14px; max-width: 68ch; }
+.realcode ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.realcode li { margin: 0 0 4px; font-size: 14px; }
+.bystep { list-style: none; padding: 0; }
+.bystep li { margin: 0 0 6px; font-size: 14.5px; }
 .content { max-width: 720px; min-width: 0; }
 .projects { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline; margin: 4px 0 18px; font-size: 14px; color: var(--muted); }
 .projects .eyebrow { margin: 0; }
