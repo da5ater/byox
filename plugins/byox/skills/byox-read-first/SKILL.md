@@ -15,7 +15,7 @@ Adapted from the `learn-before-task` skill (https://github.com/zezo-mohamed22/le
 2. **Find the gap.** What does a learner who finished the previous step still not know that this step needs? Skip what they already know.
 3. **Pick one or two concepts**, not every topic the step touches. Prefer the one that would stop them dead if they did not know it: "how Vite reads the Tailwind plugin", "what a Penpot board is and how to read its spacing".
 4. **Tie each to this step.** One sentence in `why`: where in this step it matters. A reading with no link to the step does not belong.
-5. **Choose the source.** Official docs first, then well known books and respected engineering blogs. Open the page and read the section before choosing it. Never invent a title, author or link. When unsure, name the official docs site instead. `resource-rules.md` still applies: the blocklist, one primary, human written first.
+5. **Choose the source.** A teaching page first: a tutorial, a respected engineering blog post, a well known book chapter, or a guide written as a tutorial such as the Rails Guides. Never a manual, an API reference or a spec (see `resource-rules.md`). Open the page and read the section before choosing it. Never invent a title, author or link. When unsure, name the official docs site instead. `resource-rules.md` still applies: the blocklist, one primary, human written first.
 6. **Point at the exact section**, not the site. `section` is the heading on that page.
 7. **Add the design when there is one.** A step with a `design_url` also reads its design first: say which board and which numbers to read (spacing, color, text size) in the `why`.
 
@@ -31,7 +31,7 @@ read_first:
     why: Step 02.3 runs this command. Read what each prompt means before you answer it.
 ```
 
-At most two entries. Each has `url`, `section` and `why`. Lint checks the links resolve and are not on the blocklist.
+At most two entries. Each has `url`, `section` and `why`. Lint checks the links resolve and are not on the blocklist. Every step has the field. Write `read_first: []` only when the step truly needs nothing new, such as a step that only runs a check. Lint refuses a step with no field at all. The site lists each step's readings again under Reading, grouped by step, so the learner knows when to read what.
 
 ## Self-check questions
 

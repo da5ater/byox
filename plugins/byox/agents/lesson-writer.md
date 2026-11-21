@@ -12,6 +12,7 @@ You write one lesson of a byox course, or two consecutive lessons in a ported co
 Paths only. Read each one before you write.
 
 - The course dir and your lesson id, such as `03-authentication`, or two ids in order.
+- `course/source/prs/` when it exists: the pull request descriptions behind your steps. Use them for the story and for each step's `real_code` links.
 - `course/brief.md` when the lead wrote one: the course's own rules, such as project folders, names to keep and resources never to touch. It wins over your defaults.
 - `course/course.md`. Read the outline, the stack, the services and the concept owners. Never edit it.
 - Your chapter of the source: lecture files under `course/source/lectures/`, or the article section.

@@ -1,6 +1,6 @@
 # Resource rules
 
-Each lesson has two resources, a primary and a backup. Each concept page links the resources it relies on. A human-written explanation beats an agent's.
+Each lesson has two resources, a primary and a backup, and every step decides its own `read_first` (see `skills/byox-read-first`). One reading for a five-step lesson is too thin: each step that needs a new idea gets its own page. Each concept page links the resources it relies on. A human-written explanation beats an agent's.
 
 ## Rank by type
 
@@ -9,7 +9,7 @@ Each lesson has two resources, a primary and a backup. Each concept page links t
 3. A video with timestamps.
 4. Official docs, only when they are teaching-grade, such as the Rails Guides or the Tailwind docs.
 
-API reference is never a resource. A gem's README sits at most at the backup tier.
+Think of a source text and its commentary. A manual is the source text: exact, complete and hard to read for someone who does not know the idea yet. Learners read the commentary: a tutorial, a well known engineer's blog post, a W3Schools-style walkthrough, a book chapter. Pick the commentary. Database manuals, API references, language references and specs (RFCs) are never a resource or a `read_first`, and `byox lint` flags the common ones (`reference_docs`). A gem's README sits at most at the backup tier.
 
 ## Check every candidate
 

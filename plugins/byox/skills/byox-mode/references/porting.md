@@ -22,6 +22,14 @@ Each finding becomes an instruction or a hint in the step.
 
 Writers of a ported course run in lesson order, because lesson N's port starts from lesson N-1's last tag.
 
+## Current code, ring by ring
+
+A course built from a living codebase follows the code as it is today, never its history. Build what the current code does, with its current names, not an older version that later changed.
+
+The first ring builds a slim version, and each later ring adds what it left for later, until the whole system is built. Nothing is dropped. Anything the current code does that this ring does not build goes under `deferred:` in `course.md` with the ring it belongs to, and the lesson names that ring.
+
+"Same stack as the source" means the source's gems, its error responses, its logging and its background jobs (such as Sidekiq), not only its language and framework. Introduce each one in the ring that first needs it, the way the source uses it.
+
 ## What may change
 
 - Framework idioms the target stack replaced. Webpacker becomes importmap. `link_to ... method: :delete` becomes `button_to ... method: :delete` without jQuery UJS.

@@ -27,6 +27,8 @@ Run this at the very start of a compile, before the outline and before any lesso
 2. **Designs.** `penpot-diff`: a Penpot frame per UI step, checked by a coarse screenshot compare. `penpot`: a Penpot frame per UI step, checked by DOM tests only. `html`: a design built in plain HTML. `none`: text steps only. Anything but `none` means every `ui` or `visual` step needs a `design_url`, or a `design_exempt` reason, and `byox lint` enforces it.
 3. **Stand-ins.** List every external service (payments, email, storage, OAuth), every private or internal library the learner cannot install, and every sibling service the course does not build. Propose a mode for each: `real`, `free_tier`, `sandbox`, `stub`, or `learner_writes` (the learner builds a small version in a named lesson). Show it as one table, name, kind, mode and what the learner will see, and get a yes. Record each row in `services:` as `{name, kind: service|library, mode}`.
 
+   A black-box service, one the code only sends requests to and reads answers from (a card processor, an SMS gateway), is not a learning opportunity, so it becomes a local stub that answers like the real one. The setup around it stays real: the learner writes the same config keys, credentials lookup and HTTP client wrapper the source uses, pointed at the stub. Only the far end changes, so the learner still learns how the code talks to the service.
+
 ## Plan before any lesson
 
 The wizard is a planning session, not a form. Before the outline, settle three things and write them down, because every step names them:

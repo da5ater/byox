@@ -9,7 +9,7 @@ One call, four questions.
 1. **Goal in about three months** (multi-select). Offer the outcomes this source can give, such as: take tickets alone in this codebase, draw the whole system, review teammates' code, tell strong stories to a manager or in interviews, build my own version, pass an exam.
 2. **How they learn best.** Build it myself from scratch. Trace the real code with guided questions. A mix: build the core, then read the real thing.
 3. **Time per week.** 2 to 4 hours, 5 to 8 hours, 10 or more. One lesson takes about one to two hours of learner time.
-4. **Breadth or depth first.** The whole system thin first, one area deep first, or "pick for me".
+4. **Roles** (multi-select). Which parts the learner wants to build themselves, such as backend, infrastructure (deploys, jobs, databases, queues) and frontend. byox hands the learner finished code for the parts they did not pick, so the lessons spend their time on the chosen roles. Breadth or depth is a strategy choice in round 2.
 
 If `<vault>/learner-profile.md` is empty, add a short third call before round 2 with one question: what they already know, as options drawn from the source's stack plus Other.
 
@@ -28,6 +28,10 @@ The rest of the stack wizard runs only for what round 2 and the source did not s
 
 Size the first batch from time per week: about one lesson per week of the learner's time, at least four lessons and at most eight. Name the next two or three batches by theme, so the learner sees how the course grows. Each later batch is added with `playbooks/add-lessons.md`, which starts from `plan.batches`.
 
+## When a ring is done
+
+When the last lesson of a batch is released, ask in one `AskUserQuestion`: "This branch is done. Which branch should we build next?" Offer the planned batches from `plan.batches` and the biggest groups under `deferred:`, recommended first, plus Other. The learner may name a new branch, such as a subsystem the team just rebuilt. Then run `playbooks/add-lessons.md` for it.
+
 ## Record it
 
 In `course.md`, before `lessons:`:
@@ -35,6 +39,7 @@ In `course.md`, before `lessons:`:
 ```yaml
 plan:
   goals: [take tickets alone, draw the whole system]
+  roles: [backend, infrastructure]
   hours_per_week: 6
   style: build it myself
   depth: one area deep first
@@ -47,4 +52,4 @@ plan:
 
 In `<vault>/learner-profile.md`, add or update `## Goals`, `## Pace` and `## Style` next to `## Knows` and `## Learning`. Writers and reviewers read it.
 
-`byox lint` requires `plan.goals`, `plan.hours_per_week` and `plan.strategy` once the course is approved.
+`byox lint` requires `plan.goals`, `plan.roles`, `plan.hours_per_week` and `plan.strategy` once the course is approved.

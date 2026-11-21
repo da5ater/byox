@@ -20,12 +20,13 @@ Short. It lists each step with its id and one line of what is true when it is do
 Modeled on how GreatFrontEnd writes a question, because it is deterministic: the learner can tell at every line whether they are done. A step reads like this, in this order, with a blank line between parts:
 
 1. **The goal, one sentence.** "Build the `Navbar` component: a labeled navigation bar with the brand, two links and a search box." Verb first, one thing.
-2. **Requirements.** Three to seven bullets, each one observable behavior, each one line. Written as what is true, not what to type. "The brand link says Corsego and goes to `/`." "Submitting the search form does nothing yet." No bullet says how to code it. These are what the step's check looks at, so a learner can tick them off.
-3. **Example.** What done looks like: the design image or Penpot board, or the exact terminal session with its output. When a design exists, say which numbers to read from it.
+2. **Requirements.** Three to seven bullets, each one observable behavior, each one line. Name the exact inputs and outputs: what the client sends, by field name, and what comes back, by status and keys. "A beneficiary posts `phone_number`, `identity_reference` and `password` to `/retail/sessions`." A requirement that says only "with the right password gets 200" leaves the learner guessing what is sent. Written as what is true, not what to type. "The brand link says Corsego and goes to `/`." "Submitting the search form does nothing yet." No bullet says how to code it. These are what the step's check looks at, so a learner can tick them off.
+3. **Example.** What done looks like: the design image or Penpot board, or the exact terminal session with its output. When a design exists, say which numbers to read from it. A terminal example runs from a fresh start of this step: every value it uses, such as a token or an id, is made by an earlier command in the same example. Never `$TOKEN` without the command that gets it. The learner runs the example after the Requirements to see the code work, so it must work when pasted as is.
 4. **Notes.** One or two bullets of scope, as GreatFrontEnd does: what to ignore ("styling is not checked here, match the design after the tests pass") and what you may change ("you may rename the props"). Also the one trap worth a line, and any divergence from the mentor.
 5. **Starter.** What already exists that they build on, by file name ("`src/App.tsx` already renders `<Navbar />`"). A learner never starts from a blank page when the step needs a hook to hang on.
-6. **Setup.** Last, because it is the part you follow with the other parts open beside it. Only when there is something to run or install: numbered items, one command each, each in its own code block, with the folder named (`work/frontend`). Skip it when there is nothing.
+6. **Setup.** Last, because it is the part you follow with the other parts open beside it. Only when there is something to run or install: numbered items, one command each, each in its own code block, with the folder named (`work/frontend`). Skip it when there is nothing. Setup is scaffolding the requirement does not test: `rails new` with its flags, adding the test framework, creating the database. Anything a requirement depends on is the requirement's own work and never Setup: the model the step is about, its columns, and a gem the behavior needs (bcrypt for `has_secure_password`). Name those in Requirements and let the learner do them.
 7. **Read first** is not prose. It is the step's `read_first` field. See `byox-read-first`.
+8. **Real code** is not prose either. It is the step's `real_code` field: one to three links to where the real codebase did this step, the pull request first, then the file at its lines. The learner opens them after the step is green to compare their code with the team's.
 
 The old numbered recipe, twelve items long, is gone. Setup keeps numbers because commands run in order. Everything else is bullets about behavior, so there is no wall to climb and nothing hidden in the middle of a sentence.
 
@@ -42,6 +43,12 @@ Use the order learners actually improve in, not only the order the code is built
 - **Late steps: predict, then change.** Ask "What will this print? Write your guess, then run it." Then ask for a small change of their own (analyze, create). The gap between guess and result is where learning happens.
 - **Fade the help.** The first step of a kind spells more out. The next one of the same kind names the goal only.
 - **One new thing per step.** If a step teaches two ideas, it is two steps.
+
+## Write it the way the team wrote it
+
+The goal is to think like the people who wrote the source, not only to make the check pass. When the source puts logic in a service object, a concern, a policy or a job, the step asks for the same shape with the same name, and one line under Notes says why the team chose it: "The real code keeps sign-in in `Retail::UserSessions::Dispatcher`, a service object, so the controller only renders. Keep yours the same." Use the source's gems, its error responses and its logging the same way, once the course's ring reaches them.
+
+A course grows ring by ring and drops nothing. When the source does more than this step builds, say which ring it comes in, never that it is left out: "The real sign-in also tracks devices. That comes in ring 2." Report each such item to the lead, who lists it under `deferred:` in `course.md`. `byox lint` flags "leave out" and "out of scope" in a lesson.
 
 ## Hints
 

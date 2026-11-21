@@ -99,6 +99,8 @@ coverage:                         # every feature of the final product maps to s
   - {feature: Pages require login, steps: ["03.2"]}
 dropped:
   - {lectures: ["009"], reason: Cloud9 disk space}
+deferred:                         # what the real code does that a later ring builds; nothing is dropped
+  - {item: Device tracking on sign-in, ring: 2}
 ---
 
 # Corsego
@@ -168,7 +170,8 @@ The precise spec, as a short list.
 - `generators` lists commands like `bin/rails generate devise:install`. `generated` lists globs of the files they write, such as `db/migrate/*_devise_create_users.rb` or `test/**`. The solution view collapses those files, and the leak check ignores them. A glob ending in `/**` matches everything under that folder. Any other glob matches like `File.fnmatch` with `**` crossing folders.
 - Do not write gotchas. They did not help the learner. A course compiled earlier keeps its `gotchas` field, and the site still shows it.
 - `design_url` is optional. On a `visual` step, an https link to the design, such as a Penpot view link. The lesson page shows it as a button.
-- `read_first` is optional and holds at most two entries, each with `url`, `section` and `why`: what to read before this step, at the exact heading, and why this step needs it. Lint checks the links. See `skills/byox-read-first`.
+- `read_first` is required and holds at most two entries, each with `url`, `section` and `why`: what to read before this step, at the exact heading, and why this step needs it. `read_first: []` says the step needs nothing new. Lint checks the links and flags manuals and references. See `skills/byox-read-first`.
+- `real_code` is optional and holds at most three entries, each with an https `url` and a `label`: where the real codebase did this step, as a pull request, a commit, or a file at its lines on GitHub (`https://github.com/<org>/<repo>/blob/<sha>/<path>#L10-L42`). The site shows them under "See how the team built it" once the step is green or the lesson is skipped, never before, because they are the answer key. A course built from a repo gives every building step at least one.
 - `design_exempt` is optional. One sentence on why a `ui` or `visual` step has no design, such as a step that only creates the project. With `stack.choices.design` other than `none`, lint requires `design_url` or this.
 - `fixed_values` is optional. Set it to one sentence when the expected answer is fixed by the task and cannot be randomized, such as an app's module name or the root route. Lint then skips its random-values check for that step. An empty reason does not count.
 
